@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt
-from configuration import config
+from ..configuration import config
 
 config_paths = config['PATHS']
 
