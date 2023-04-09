@@ -16,7 +16,7 @@ class TestPressureSensor(TestCase):
         bluetooth = Bluetooth()
         cls.bed = Bed(patient=Patient(bluetooth=bluetooth), bluetooth=bluetooth)
         data_df = load_sensor_dataframe(cls.test_file)
-        cls.sensor = cls.bed.get_pressure_sensor()
+        cls.sensor = cls.bed
         cls.sensor.append_sensor_data(data_df)
         cls.sensor.set_current_frame(data_df)
 

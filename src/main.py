@@ -1,5 +1,7 @@
 import threading
 
+from src.sensor.tactilus import PressureSensor
 
 if __name__ == "__main__":
-    threading.Thread(target=bed.get_pressure_sensor().start_sse_client).start()
+    thread = PressureSensor(file_count=60)
+    thread.start()
