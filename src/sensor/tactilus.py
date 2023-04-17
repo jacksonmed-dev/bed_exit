@@ -93,7 +93,7 @@ class PressureSensor(Thread):
 
     def run(self):
         if self.isRaspberryPi:
-            self.start_sse_client()
+            self.start_api_sse_client()
         else:
             self.start_dummy_sse_client()
 
@@ -131,6 +131,20 @@ class PressureSensor(Thread):
                     #     insert_data(compiled_data_path, is_patient_current)
                     #
                     # is_patient_previous = is_patient_current
+
+    def start_api_sse_client(self):
+        url = "http://10.0.0.1/api/sse"
+        sse = SSEClient(url)
+        for response in sse:
+            data = response.data.strip()
+            if data:
+                json_data = json.loads(data)
+                if 'id' in json_data:
+                    id = json_data['id']
+                    print("ID:", id)
+                else:
+                    print("No ID in response.")
+
 
     def start_dummy_sse_client(self):
         directory = os.getcwd()
