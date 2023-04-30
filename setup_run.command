@@ -4,4 +4,4 @@ source ./venv/bin/activate
 
 pip3 install -r requirements.txt
 
-python3 ./src/test_write.py
+python3 ./src/main.py
