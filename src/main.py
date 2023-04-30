@@ -38,6 +38,7 @@ def start_api_monitor_sse_client():
     sse = SSEClient(url)
     for response in sse:
         if response.event == 'body':
+            print("EVENT: ", response.event)
             data = response.data.strip()
             present_field = json.loads(data)['present']
             if is_present and not present_field:  # indicates a user was in the bed and exited.
@@ -50,7 +51,6 @@ def start_api_monitor_sse_client():
             is_present = present_field  # set the value of is_present to present_field
             print(is_present)
         if response.event == 'newframe':
-            print("EVENT: ", response.event)
             data = response.data.strip()
             frame_id = json.loads(data)['id']  # percent of storage used
         if response.event == 'storage':
