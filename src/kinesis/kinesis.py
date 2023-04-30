@@ -45,7 +45,7 @@ class KinesisClient:
         record_result = self.kinesis_client.put_record(
             StreamName=os.environ["STREAM_NAME"],
             Data=record,
-            PartitionKey=record["PartitionKey"],
+            PartitionKey=os.environ["PARTITION_KEY"],
             # SequenceNumberForOrdering=record.get(
             #     "SequenceNumberForOrdering",
             #      None,
