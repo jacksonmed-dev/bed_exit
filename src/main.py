@@ -37,21 +37,24 @@ def start_api_monitor_sse_client():
     url = f"{sensor_url}/api/monitor/sse"
     sse = SSEClient(url)
     for response in sse:
-        print("EVENT: ", response.event)
         if response.event == 'body':
             data = response.data.strip()
             present_field = json.loads(data)['present']
             if is_present and not present_field:  # indicates a user was in the bed and exited.
+                print("Retrieving last 300 frames")
                 frames = get_frames_within_window()  # get past 300 frames
+                print("formatting data for storage")
                 formatted_data = format_sensor_data(frames)  # format data for storage
+                print("Sending data to kinesis")
                 kinesis_client.put_record(formatted_data)
-                print(formatted_data)
             is_present = present_field  # set the value of is_present to present_field
             print(is_present)
         if response.event == 'newframe':
+            print("EVENT: ", response.event)
             data = response.data.strip()
             frame_id = json.loads(data)['id']  # percent of storage used
         if response.event == 'storage':
+            print("EVENT: ", response.event)
             data = response.data.strip()
             storage_field = json.loads(data)['used']  # percent of storage used
             if storage_field > 85:
@@ -88,7 +91,7 @@ def get_frames_within_window():
     if frame_id < 300:
         after_frame = 0
     else:
-        after_frame = frame_id - 2
+        after_frame = frame_id - 300
     before_frame = frame_id
 
     url = f"{sensor_url}/api/monitor/frames?after={after_frame}&before={before_frame}"

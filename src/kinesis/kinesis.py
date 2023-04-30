@@ -52,7 +52,7 @@ class KinesisClient:
             # ),
             # StreamARN=os.environ["STREAM_ARN"]
         )
-        print(f"Wrote records: {record_result}")
+        print(f"Wrote record successfully")
 
     def put_records(self, records):
         records_result = self.kinesis_client.put_records(
