@@ -6,6 +6,7 @@ from datetime import datetime
 from sseclient import SSEClient
 import threading
 from kinesis import KinesisClient
+from wifi import connect_to_wifi_network
 
 is_present = True  # set the default value of is_present to True
 frame_id = None  # initialize global variable "id" to None
@@ -127,8 +128,11 @@ def format_readings(readings):
 
 
 if __name__ == '__main__':
-    # kinesis_client = KinesisClient()
-    # kinesis_client.put_records([kinesis_client.generate_record(1)])
+    connect_to_wifi_network(
+        network_ssid=os.environ["SENSOR_SSID"],
+        network_password=os.environ["SENSOR_PASSWORD"],
+        wireless_interface=os.environ["WIRELESS_INTERFACE"]
+    )
     set_frequency(frequency)
     start_api_monitor_sse_client()
     # thread1 = threading.Thread(target=start_api_monitor_sse_client)

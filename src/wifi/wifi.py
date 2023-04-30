@@ -1,5 +1,6 @@
 import subprocess
 
+
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
     config_text = f"""
@@ -17,7 +18,8 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
         f.write(config_text)
 
     # Start the wpa_supplicant process
-    process = subprocess.Popen(["sudo", "wpa_supplicant", "-i", wireless_interface, "-c", "/etc/wpa_supplicant/wpa_supplicant.conf"])
+    process = subprocess.Popen(
+        ["sudo", "wpa_supplicant", "-i", wireless_interface, "-c", "/etc/wpa_supplicant/wpa_supplicant.conf"])
 
     # Wait for the process to complete
     process.wait()
