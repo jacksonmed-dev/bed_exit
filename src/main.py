@@ -120,20 +120,17 @@ def format_sensor_data(readings):
     for i, obj in enumerate(readings):
         output_obj = {
             "PartitionKey": os.environ["PARTITION_KEY"],
-            "Data": {
+            "Data": json.dumps({
                 "id": frame_id + i,
                 "frame": i,
                 "time": timestamp,
                 "patient_present": is_present,
                 "frequency": frequency,
                 "readings": obj["readings"][0]
-            }
+            })
         }
         output_array.append(output_obj)
     return output_array
-
-    json_data = json.dumps(output_array)
-    return json_data
 
 
 def format_readings(readings):
