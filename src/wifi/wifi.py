@@ -17,6 +17,9 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as f:
         f.write(config_text)
 
+    # Stop any existing wpa_supplicant process
+    subprocess.run(["sudo", "killall", "wpa_supplicant"])
+
     # Start the wpa_supplicant process
     process = subprocess.Popen(
         ["sudo", "wpa_supplicant", "-i", wireless_interface, "-c", "/etc/wpa_supplicant/wpa_supplicant.conf"])
