@@ -4,11 +4,9 @@ import os
 import requests
 from datetime import datetime
 from sseclient import SSEClient
-import threading
 from kinesis import KinesisClient
-from wifi import connect_to_wifi_network
 
-is_present = True  # set the default value of is_present to True
+is_present = False  # set the default value of is_present to True
 frame_id = None  # initialize global variable "id" to None
 sensor_url = os.environ["SENSOR_URL"]
 frequency = int(os.environ["SENSOR_FREQUENCY"])
