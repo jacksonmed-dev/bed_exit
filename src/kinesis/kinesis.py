@@ -60,4 +60,5 @@ class KinesisClient:
             StreamName=os.environ["STREAM_NAME"],
             # StreamARN=os.environ["STREAM_ARN"]
         )
+
         print(f"Wrote records: {records_result}")
