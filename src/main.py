@@ -41,6 +41,7 @@ def start_api_monitor_sse_client():
             print("EVENT: ", response.event)
             data = response.data.strip()
             present_field = json.loads(data)['present']
+            print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
             if is_present and not present_field:  # indicates a user was in the bed and exited.
                 print("Retrieving last 300 frames")
                 frames = get_frames_within_window()  # get past 300 frames
@@ -49,7 +50,6 @@ def start_api_monitor_sse_client():
                 print("Sending data to kinesis")
                 kinesis_client.put_records(formatted_data)
             is_present = present_field  # set the value of is_present to present_field
-            print(f"Is Patient Present: {is_present}")
         if response.event == 'newframe':
             data = response.data.strip()
             frame_id = json.loads(data)['id']  # percent of storage used
