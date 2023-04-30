@@ -46,7 +46,7 @@ def start_api_monitor_sse_client():
                 print("formatting data for storage")
                 formatted_data = format_sensor_data(frames)  # format data for storage
                 print("Sending data to kinesis")
-                kinesis_client.put_record(formatted_data)
+                kinesis_client.put_records(formatted_data)
             is_present = present_field  # set the value of is_present to present_field
             print(is_present)
         if response.event == 'newframe':
@@ -108,14 +108,28 @@ def format_sensor_data(readings):
     global frame_id
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S.%f")
-    data = {
-        "id": frame_id,
-        "time": timestamp,
-        "patient_present": is_present,
-        "frequency": frequency,
-        "readings": format_readings(readings)
-    }
-    json_data = json.dumps(data)
+    # data = {
+    #     "id": frame_id,
+    #     "time": timestamp,
+    #     "patient_present": is_present,
+    #     "frequency": frequency,
+    #     "readings": format_readings(readings)
+    # }
+
+    output_array = []
+    for i, obj in enumerate(readings):
+        output_obj = {
+            "id": frame_id + i,
+            "frame": i,
+            "time": timestamp,
+            "patient_present": is_present,
+            "frequency": frequency,
+            "readings": obj["readings"][0]
+        }
+        output_array.append(output_obj)
+    return output_array
+
+    json_data = json.dumps(output_array)
     return json_data
 
 
