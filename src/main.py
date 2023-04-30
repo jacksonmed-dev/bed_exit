@@ -94,7 +94,7 @@ def get_frames_within_window():
         after_frame = frame_id - 300
     before_frame = frame_id
 
-    url = f"{sensor_url}/api/monitor/frames?after={after_frame}&before={before_frame}"
+    url = f"{sensor_url}/api/monitor/frames?after={after_frame}&before={before_frame}&exclude=risks"
     response = requests.get(url)
 
     if response.status_code == 200:
@@ -119,12 +119,15 @@ def format_sensor_data(readings):
     output_array = []
     for i, obj in enumerate(readings):
         output_obj = {
-            "id": frame_id + i,
-            "frame": i,
-            "time": timestamp,
-            "patient_present": is_present,
-            "frequency": frequency,
-            "readings": obj["readings"][0]
+            "PartitionKey": os.environ["PARTITION_KEY"],
+            "Data": {
+                "id": frame_id + i,
+                "frame": i,
+                "time": timestamp,
+                "patient_present": is_present,
+                "frequency": frequency,
+                "readings": obj["readings"][0]
+            }
         }
         output_array.append(output_obj)
     return output_array
