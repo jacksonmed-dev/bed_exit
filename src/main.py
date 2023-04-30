@@ -57,6 +57,7 @@ def start_api_monitor_sse_client():
             print("EVENT: ", response.event)
             data = response.data.strip()
             storage_field = json.loads(data)['used']  # percent of storage used
+            print(f"Storage Used: {storage_field}%")
             if storage_field > 85:
                 delete_all_frames()
 
