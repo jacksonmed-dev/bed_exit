@@ -128,11 +128,11 @@ def format_readings(readings):
 
 
 if __name__ == '__main__':
-    connect_to_wifi_network(
-        network_ssid=os.environ["SENSOR_SSID"],
-        network_password=os.environ["SENSOR_PASSWORD"],
-        wireless_interface=os.environ["WIRELESS_INTERFACE"]
-    )
+    # connect_to_wifi_network(
+    #     network_ssid=os.environ["SENSOR_SSID"],
+    #     network_password=os.environ["SENSOR_PASSWORD"],
+    #     wireless_interface=os.environ["WIRELESS_INTERFACE"]
+    # )
     set_frequency(frequency)
     start_api_monitor_sse_client()
     # thread1 = threading.Thread(target=start_api_monitor_sse_client)

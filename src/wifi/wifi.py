@@ -4,14 +4,16 @@ import subprocess
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
     config_text = f"""
-    ctrl_interface=/run/wpa_supplicant
-    ctrl_interface_group=0
+    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
     update_config=1
+    country=US
     network={{
         ssid="{network_ssid}"
         psk="{network_password}"
     }}
     """
+
+
 
     # Write the configuration file to disk
     with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
