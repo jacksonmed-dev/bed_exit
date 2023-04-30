@@ -49,7 +49,7 @@ def start_api_monitor_sse_client():
                 print("Sending data to kinesis")
                 kinesis_client.put_records(formatted_data)
             is_present = present_field  # set the value of is_present to present_field
-            print(is_present)
+            print(f"Is Patient Present: {is_present}")
         if response.event == 'newframe':
             data = response.data.strip()
             frame_id = json.loads(data)['id']  # percent of storage used
