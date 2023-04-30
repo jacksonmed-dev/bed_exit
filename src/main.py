@@ -44,7 +44,7 @@ def start_api_monitor_sse_client():
             if is_present and not present_field:  # indicates a user was in the bed and exited.
                 frames = get_frames_within_window()  # get past 300 frames
                 formatted_data = format_sensor_data(frames)  # format data for storage
-                kinesis_client.put_records(formatted_data)
+                kinesis_client.put_record(formatted_data)
                 print(formatted_data)
             is_present = present_field  # set the value of is_present to present_field
             print(is_present)
