@@ -65,13 +65,13 @@ def start_api_monitor_sse_client():
 
 # Function to update the is_patient_present variable
 def update_patient_presence(presence):
-    global is_patient_present, last_update_time
+    global is_present, last_update_time
     current_time = time.time()
-    print("current present value: ", is_patient_present)
+    print("current present value: ", is_present)
     print("new present value: ", presence)
     print("current time difference: ", current_time - last_update_time)
     if (current_time - last_update_time) > 5:
-        is_patient_present = presence
+        is_present = presence
         last_update_time = current_time
 
 def set_frequency(frequency):
