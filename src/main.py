@@ -5,6 +5,7 @@ import requests
 from datetime import datetime
 from sseclient import SSEClient
 from kinesis import KinesisClient
+import uuid
 
 is_present = False  # set the default value of is_present to True
 frame_id = None  # initialize global variable "id" to None
@@ -117,15 +118,16 @@ def format_sensor_data(readings):
     # }
 
     output_array = []
+    uid = uuid.uuid4()
     for i, obj in enumerate(readings):
         output_obj = {
             "PartitionKey": os.environ["PARTITION_KEY"],
             "Data": json.dumps({
-                "id": frame_id + i,
+                "id": uid,
                 "frame": i,
                 "time": timestamp,
                 "patient_present": is_present,
-                "frequency": frequency,
+                "frames_per_hour": frequency,
                 "readings": obj["readings"][0]
             })
         }
