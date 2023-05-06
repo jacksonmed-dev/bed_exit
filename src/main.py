@@ -41,9 +41,9 @@ def start_api_monitor_sse_client():
         if response.event == 'body':
             print("EVENT: ", response.event)
             data = response.data.strip()
-            print(f"\n\nBody Event Data: {data}\n\n")
+            print(f"Body Event Data: {data}\n\n")
             present_field = json.loads(data)['present']
-            print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
+            # print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
             if is_present and not present_field:  # indicates a user was in the bed and exited.
                 print("Retrieving last 300 frames")
                 frames = get_frames_within_window()  # get past 300 frames
@@ -67,6 +67,9 @@ def start_api_monitor_sse_client():
 def update_patient_presence(presence):
     global is_patient_present, last_update_time
     current_time = time.time()
+    print("current present value: ", is_patient_present)
+    print("new present value: ", presence)
+    print("current time difference: ", current_time - last_update_time)
     if (current_time - last_update_time) > 5:
         is_patient_present = presence
         last_update_time = current_time
