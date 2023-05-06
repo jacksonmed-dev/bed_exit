@@ -70,7 +70,7 @@ def update_patient_presence(presence):
     print("current present value: ", is_present)
     print("new present value: ", presence)
     print("current time difference: ", current_time - last_update_time)
-    if (current_time - last_update_time) > 5:
+    if (current_time - last_update_time) > 60:
         is_present = presence
         last_update_time = current_time
 
