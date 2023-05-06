@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import requests
 from datetime import datetime
@@ -8,6 +9,7 @@ from kinesis import KinesisClient
 import uuid
 
 is_present = False  # set the default value of is_present to True
+last_update_time = 0
 frame_id = None  # initialize global variable "id" to None
 sensor_url = os.environ["SENSOR_URL"]
 frequency = int(os.environ["SENSOR_FREQUENCY"])
@@ -40,7 +42,7 @@ def start_api_monitor_sse_client():
             print("EVENT: ", response.event)
             data = response.data.strip()
             print(f"\n\nBody Event Data: {data}\n\n")
-            present_field = json.loads(data)['centered']
+            present_field = json.loads(data)['present']
             print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
             if is_present and not present_field:  # indicates a user was in the bed and exited.
                 print("Retrieving last 300 frames")
@@ -49,7 +51,7 @@ def start_api_monitor_sse_client():
                 formatted_data = format_sensor_data(frames)  # format data for storage
                 print("Sending data to kinesis")
                 kinesis_client.put_records(formatted_data)
-            is_present = present_field  # set the value of is_present to present_field
+            update_patient_presence(present_field)  # set the value of is_present to present_field
         if response.event == 'newframe':
             data = response.data.strip()
             frame_id = json.loads(data)['id']  # percent of storage used
@@ -61,6 +63,13 @@ def start_api_monitor_sse_client():
             if storage_field > 85:
                 delete_all_frames()
 
+# Function to update the is_patient_present variable
+def update_patient_presence(presence):
+    global is_patient_present, last_update_time
+    current_time = time.time()
+    if (current_time - last_update_time) > 5:
+        is_patient_present = presence
+        last_update_time = current_time
 
 def set_frequency(frequency):
     url = f"{sensor_url}/api/frequency"
