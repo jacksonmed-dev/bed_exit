@@ -38,6 +38,7 @@ def start_api_monitor_sse_client():
         if response.event == 'body':
             print("EVENT: ", response.event)
             data = response.data.strip()
+            print(f"\n\nBody Event Data: {data}\n\n")
             present_field = json.loads(data)['present']
             print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
             if is_present and not present_field:  # indicates a user was in the bed and exited.
