@@ -118,7 +118,7 @@ def format_sensor_data(readings):
     # }
 
     output_array = []
-    uid = uuid.uuid4()
+    uid = str(uuid.uuid4())
     for i, obj in enumerate(readings):
         output_obj = {
             "PartitionKey": os.environ["PARTITION_KEY"],
