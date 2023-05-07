@@ -55,6 +55,8 @@ class KinesisClient:
         print(f"Wrote record successfully")
 
     def put_records(self, records):
+        print("############# KINESIS #############")
+        print("sending records to kinesis")
         records_result = self.kinesis_client.put_records(
             Records=records,
             StreamName=os.environ["STREAM_NAME"],
@@ -62,3 +64,5 @@ class KinesisClient:
         )
 
         print(f"Wrote all records successfully")
+        print("############ END KINESIS ###########")
+

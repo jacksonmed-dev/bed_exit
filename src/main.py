@@ -34,22 +34,28 @@ def start_api_monitor_sse_client(kinesis_client):
 # Function to update the is_patient_present variable
 def update_patient_presence():
     global is_present, is_sensor_present, is_timer_enabled
+    print(f"Updating pi is_present to {is_sensor_present}")
     is_present = is_sensor_present
     is_timer_enabled = False
 
 
 def run_update_patient_presence():
     global is_timer_enabled, timer_thread
+    print("Starting new timer...")
     is_timer_enabled = True
     timer_thread = threading.Timer(60, update_patient_presence)
     timer_thread.start()
 
 
 def handle_body_event(data, kinesis_client):
+    print("############## BODY EVENT ###############")
     global is_present, is_sensor_present
     is_sensor_present = json.loads(data)['present']
+    print(f"sensor patient present:\t{is_sensor_present}")
+    print(f"pi patient present:\t{is_present}")
 
     if is_timer_enabled and timer_thread is not None:
+        print("Cancelling Timer... Body event detected before timer expired")
         timer_thread.cancel()
         run_update_patient_presence()  # Run this function on a separate non blocking thread
     if is_present and not is_sensor_present:  # indicates a user was in the bed and exited.
