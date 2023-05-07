@@ -31,7 +31,7 @@ def delete_all_frames():
         print("Failed to delete frames. Status code:", response.status_code)
 
 
-def get_frames_within_window():
+def get_frames_within_window(frame_id):
     if frame_id is None:
         return None  # or raise an exception, depending on your requirements
 

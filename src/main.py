@@ -54,7 +54,7 @@ def handle_body_event(data, kinesis_client):
         run_update_patient_presence()  # Run this function on a separate non blocking thread
     if is_present and not is_sensor_present:  # indicates a user was in the bed and exited.
         if not is_timer_enabled:
-            frames = get_frames_within_window()  # get past 300 frames
+            frames = get_frames_within_window(frame_id)  # get past 300 frames
             formatted_data = format_sensor_data(frames, is_present, frequency=int(
                 os.environ["SENSOR_FREQUENCY"]))  # format data for storage
             kinesis_client.put_records(formatted_data)
