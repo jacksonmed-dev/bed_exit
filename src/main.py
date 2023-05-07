@@ -58,15 +58,19 @@ def handle_body_event(data, kinesis_client):
         print("Cancelling Timer... Body event detected before timer expired")
         timer_thread.cancel()
         run_update_patient_presence()  # Run this function on a separate non blocking thread
-    if is_present and not is_sensor_present:  # indicates a user was in the bed and exited.
-        if not is_timer_enabled:
-            frames = get_frames_within_window(frame_id)  # get past 300 frames
-            formatted_data = format_sensor_data(frames, is_present, frequency=int(
-                os.environ["SENSOR_FREQUENCY"]))  # format data for storage
-            kinesis_client.put_records(formatted_data)
-            run_update_patient_presence()  # Run this function on a separate non blocking thread
+    if is_present and not is_sensor_present and not is_timer_enabled:  # indicates a user was in the bed and exited.
+        print("--- PATIENT EXIT DETECTED ---")
+        frames = get_frames_within_window(frame_id)  # get past 300 frames
+        formatted_data = format_sensor_data(frames, is_present, frequency=int(
+            os.environ["SENSOR_FREQUENCY"]))  # format data for storage
+        kinesis_client.put_records(formatted_data)
+        run_update_patient_presence()  # Run this function on a separate non blocking thread
+    if not is_present and is_sensor_present:
+        print("--- PATIENT ENTRY DETECTED ---")
+        run_update_patient_presence()
     if not is_timer_enabled:
         is_present = is_sensor_present
+    print("\n\n")
 
 
 def handle_new_frame_event(data):
@@ -75,11 +79,12 @@ def handle_new_frame_event(data):
 
 
 def handle_storage_event(data):
-    print("EVENT: storage")
+    print("############## STORAGE EVENT ###############")
     storage_field = json.loads(data)['used']  # percent of storage used
     print(f"Storage Used: {storage_field}%")
     if storage_field > 85:
         delete_all_frames()
+    print("\n\n")
 
 
 if __name__ == '__main__':
