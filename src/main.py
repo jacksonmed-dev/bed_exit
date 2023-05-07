@@ -1,161 +1,79 @@
 import json
 import os
-import time
+import threading
 
-import requests
-from datetime import datetime
 from sseclient import SSEClient
 from kinesis import KinesisClient
-import uuid
+from sensor import set_frequency, get_frames_within_window, format_sensor_data, delete_all_frames
 
 is_present = False  # set the default value of is_present to True
-last_update_time = 0
+is_sensor_present = False
+
+is_timer_enabled = False
+timer_thread = None
+
 frame_id = None  # initialize global variable "id" to None
 sensor_url = os.environ["SENSOR_URL"]
-frequency = int(os.environ["SENSOR_FREQUENCY"])
-
-kinesis_client = KinesisClient()
 
 
-def start_api_sse_client():
-    global frame_id  # use the global keyword to access and modify the global variable
-    url = f"{sensor_url}/api/sse"
-    sse = SSEClient(url)
-    for response in sse:
-        data = response.data.strip()
-        if data:
-            json_data = json.loads(data)
-            if 'id' in json_data:
-                frame_id = json_data['id']
-                print("ID:", frame_id)
-            else:
-                print("No ID in response.")
-
-
-def start_api_monitor_sse_client():
-    global is_present  # use the global keyword to access and modify the global variable
+def start_api_monitor_sse_client(kinesis_client):
+    global is_present, is_sensor_present, is_timer_enabled  # use the global keyword to access and modify the global variable
     global frame_id
     url = f"{sensor_url}/api/monitor/sse"
     sse = SSEClient(url)
     for response in sse:
+        data = response.data.strip()
         if response.event == 'body':
-            print("EVENT: ", response.event)
-            data = response.data.strip()
-            print(f"Body Event Data: {data}\n\n")
-            present_field = json.loads(data)['present']
-            print(f"Current Patient Present: {is_present}, Sensor Patient Present: {present_field}")
-            if is_present and not present_field:  # indicates a user was in the bed and exited.
-                print("Retrieving last 300 frames")
-                frames = get_frames_within_window()  # get past 300 frames
-                print("formatting data for storage")
-                formatted_data = format_sensor_data(frames)  # format data for storage
-                print("Sending data to kinesis")
-                kinesis_client.put_records(formatted_data)
-            update_patient_presence(present_field)  # set the value of is_present to present_field
+            handle_body_event(data, kinesis_client)
         if response.event == 'newframe':
-            data = response.data.strip()
-            frame_id = json.loads(data)['id']  # percent of storage used
+            handle_new_frame_event(data)
         if response.event == 'storage':
-            print("EVENT: ", response.event)
-            data = response.data.strip()
-            storage_field = json.loads(data)['used']  # percent of storage used
-            print(f"Storage Used: {storage_field}%")
-            if storage_field > 85:
-                delete_all_frames()
+            handle_storage_event(data)
+
 
 # Function to update the is_patient_present variable
-def update_patient_presence(presence):
-    global is_present, last_update_time
-    current_time = time.time()
-    print("current present value: ", is_present)
-    print("new present value: ", presence)
-    print("current time difference: ", current_time - last_update_time)
-    if (current_time - last_update_time) > 60:
-        is_present = presence
-        last_update_time = current_time
-
-def set_frequency(frequency):
-    url = f"{sensor_url}/api/frequency"
-    url2 = f"{sensor_url}/api/monitor/storage/frequency"
-    headers = {"Content-Type": "application/json"}
-    payload = frequency
-    response1 = requests.put(url, headers=headers, json=payload)
-    response2 = requests.put(url2, headers=headers, json=payload)
-
-    if response1.status_code == 204 and response2.status_code == 204:
-        return True
-    else:
-        return False  # or raise an exception, depending on your requirements
+def update_patient_presence():
+    global is_present, is_sensor_present, is_timer_enabled
+    is_present = is_sensor_present
+    is_timer_enabled = False
 
 
-def delete_all_frames():
-    url = f"{sensor_url}/api/monitor/frames"
-    response = requests.delete(url)
-    if response.status_code == 204:
-        print("All frames deleted successfully.")
-    else:
-        print("Failed to delete frames. Status code:", response.status_code)
+def run_update_patient_presence():
+    global is_timer_enabled, timer_thread
+    is_timer_enabled = True
+    timer_thread = threading.Timer(60, update_patient_presence)
+    timer_thread.start()
 
 
-def get_frames_within_window():
-    if frame_id is None:
-        return None  # or raise an exception, depending on your requirements
+def handle_body_event(data, kinesis_client):
+    global is_present, is_sensor_present
+    is_sensor_present = json.loads(data)['present']
 
-    if frame_id < 300:
-        after_frame = 0
-    else:
-        after_frame = frame_id - 300
-    before_frame = frame_id
-
-    url = f"{sensor_url}/api/monitor/frames?after={after_frame}&before={before_frame}&exclude=risks"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        frames = json.loads(response.text)
-        return frames
-    else:
-        return None  # or raise an exception, depending on your requirements
+    if is_timer_enabled and timer_thread is not None:
+        timer_thread.cancel()
+        run_update_patient_presence()  # Run this function on a separate non blocking thread
+    if is_present and not is_sensor_present:  # indicates a user was in the bed and exited.
+        if not is_timer_enabled:
+            frames = get_frames_within_window()  # get past 300 frames
+            formatted_data = format_sensor_data(frames, is_present, frequency=int(
+                os.environ["SENSOR_FREQUENCY"]))  # format data for storage
+            kinesis_client.put_records(formatted_data)
+            run_update_patient_presence()  # Run this function on a separate non blocking thread
+    if not is_timer_enabled:
+        is_present = is_sensor_present
 
 
-def format_sensor_data(readings):
+def handle_new_frame_event(data):
     global frame_id
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d %H:%M:%S.%f")
-    # data = {
-    #     "id": frame_id,
-    #     "time": timestamp,
-    #     "patient_present": is_present,
-    #     "frequency": frequency,
-    #     "readings": format_readings(readings)
-    # }
-
-    output_array = []
-    uid = str(uuid.uuid4())
-    for i, obj in enumerate(readings):
-        output_obj = {
-            "PartitionKey": os.environ["PARTITION_KEY"],
-            "Data": json.dumps({
-                "id": uid,
-                "frame": i,
-                "time": timestamp,
-                "patient_present": is_present,
-                "frames_per_hour": frequency,
-                "readings": obj["readings"][0]
-            })
-        }
-        output_array.append(output_obj)
-    return output_array
+    frame_id = json.loads(data)['id']  # percent of storage used
 
 
-def format_readings(readings):
-    output_array = []
-    for i, obj in enumerate(readings):
-        output_obj = {
-            "frame": i,
-            "readings": obj["readings"][0]
-        }
-        output_array.append(output_obj)
-    return output_array
+def handle_storage_event(data):
+    print("EVENT: storage")
+    storage_field = json.loads(data)['used']  # percent of storage used
+    print(f"Storage Used: {storage_field}%")
+    if storage_field > 85:
+        delete_all_frames()
 
 
 if __name__ == '__main__':
@@ -164,8 +82,5 @@ if __name__ == '__main__':
     #     network_password=os.environ["SENSOR_PASSWORD"],
     #     wireless_interface=os.environ["WIRELESS_INTERFACE"]
     # )
-    set_frequency(frequency)
-    start_api_monitor_sse_client()
-    # thread1 = threading.Thread(target=start_api_monitor_sse_client)
-    # thread1.start()
-    print("API SSE Client started on separate threads.")
+    set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
+    start_api_monitor_sse_client(KinesisClient())
