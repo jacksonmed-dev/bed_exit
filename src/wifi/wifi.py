@@ -69,6 +69,8 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
 
 def disconnect_from_wifi_network(wireless_interface):
     # Get the current network id for wlan1
+    print("Running disconnecting wifi")
+
     cmd = ["sudo", "wpa_cli", "-i", wireless_interface, "list_networks"]
     output = subprocess.check_output(cmd, universal_newlines=True)
     print("Disconnecting wlan1 output: ", output)
