@@ -60,8 +60,8 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
 
     # Wait for the new network to be connected
     while True:
-        print("Checking network status...")
         status = subprocess.check_output(["sudo", "wpa_cli", "-i", wireless_interface, "status"]).decode("utf-8")
+        print("Checking network status: ", status)
         if f'ssid="{network_ssid}"' in status:
             print("Successfully connected to WiFi network")
             break
