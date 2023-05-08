@@ -5,6 +5,7 @@ import threading
 from sseclient import SSEClient
 from kinesis import KinesisClient
 from sensor import set_frequency, get_frames_within_window, format_sensor_data, delete_all_frames
+from src.wifi import disconnect_from_wifi_network, connect_to_wifi_network
 
 is_present = False  # set the default value of is_present to True
 is_sensor_present = False
@@ -88,10 +89,11 @@ def handle_storage_event(data):
 
 
 if __name__ == '__main__':
-    # connect_to_wifi_network(
-    #     network_ssid=os.environ["SENSOR_SSID"],
-    #     network_password=os.environ["SENSOR_PASSWORD"],
-    #     wireless_interface=os.environ["WIRELESS_INTERFACE"]
-    # )
+    disconnect_from_wifi_network(wireless_interface="wlan1")
+    connect_to_wifi_network(
+        network_ssid=os.environ["SENSOR_SSID"],
+        network_password=os.environ["SENSOR_PASSWORD"],
+        wireless_interface=os.environ["WIRELESS_INTERFACE"]
+    )
     set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
     start_api_monitor_sse_client(KinesisClient())
