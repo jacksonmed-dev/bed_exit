@@ -65,7 +65,7 @@ def handle_body_event(data, kinesis_client):
             os.environ["SENSOR_FREQUENCY"]))  # format data for storage
         kinesis_client.put_records(formatted_data)
         run_update_patient_presence()  # Run this function on a separate non blocking thread
-    if not is_present and is_sensor_present:
+    if not is_present and is_sensor_present and not is_timer_enabled:
         print("--- PATIENT ENTRY DETECTED ---")
         run_update_patient_presence()
     if not is_timer_enabled:
