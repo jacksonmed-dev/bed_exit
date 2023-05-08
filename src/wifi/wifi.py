@@ -32,6 +32,7 @@ import subprocess
 #         print("Successfully connected to WiFi network")
 
 import subprocess
+import time
 
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
@@ -59,13 +60,14 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "enable_network", "0"])
     subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "save_config"])
 
-    # Wait for the new network to be connected
+    # Wait until the connection is established
     while True:
         status = subprocess.check_output(["sudo", "wpa_cli", "-i", wireless_interface, "status"]).decode("utf-8")
-        print("Checking network status: ", status)
-        if f'ssid="{network_ssid}"' in status:
+        status_dict = dict(line.split("=") for line in status.splitlines() if "=" in line)
+        if status_dict.get("ssid") == network_ssid:
             print("Successfully connected to WiFi network")
             break
+        time.sleep(1)
 
 
 def disconnect_from_wifi_network(wireless_interface):
