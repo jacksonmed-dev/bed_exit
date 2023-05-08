@@ -46,6 +46,7 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     }}
     """
 
+    print("Writing new wpa_supplicant file")
     # Write the configuration file to disk
     with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
         f.write(config_text)
@@ -59,6 +60,7 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
 
     # Wait for the new network to be connected
     while True:
+        print("Checking network status...")
         status = subprocess.check_output(["sudo", "wpa_cli", "-i", wireless_interface, "status"]).decode("utf-8")
         if f'ssid="{network_ssid}"' in status:
             print("Successfully connected to WiFi network")
@@ -69,6 +71,7 @@ def disconnect_from_wifi_network(wireless_interface):
     # Get the current network id for wlan1
     cmd = ["sudo", "wpa_cli", "-i", wireless_interface, "list_networks"]
     output = subprocess.check_output(cmd, universal_newlines=True)
+    print("Disconnecting wlan1 output: ", output)
     network_id = None
     for line in output.splitlines()[1:]:
         fields = line.split()
@@ -77,6 +80,7 @@ def disconnect_from_wifi_network(wireless_interface):
             break
 
     # If a network is currently connected, disconnect from it
+    print("disconnecting wlan1 network connection")
     if network_id is not None:
         subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "disable_network", network_id])
         subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "remove_network", network_id])
