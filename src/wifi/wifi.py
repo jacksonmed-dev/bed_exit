@@ -36,6 +36,7 @@ import subprocess
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
+    print("network ssid: ", network_ssid)
     config_text = f"""
     ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
     update_config=1
