@@ -16,13 +16,8 @@ from ble import (
     Descriptor,
     Agent,
 )
-
-import struct
-import requests
 import array
 from enum import Enum
-
-import sys
 
 MainLoop = None
 try:
@@ -43,10 +38,6 @@ logHandler.setFormatter(formatter)
 filelogHandler.setFormatter(formatter)
 logger.addHandler(filelogHandler)
 logger.addHandler(logHandler)
-
-mainloop = None
-
-
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):

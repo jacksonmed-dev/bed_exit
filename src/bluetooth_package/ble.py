@@ -1,7 +1,6 @@
 import dbus
 
 import logging
-import sys
 
 DBUS_OM_IFACE = "org.freedesktop.DBus.ObjectManager"
 DBUS_PROP_IFACE = "org.freedesktop.DBus.Properties"
