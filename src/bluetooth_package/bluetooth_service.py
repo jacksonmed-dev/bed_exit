@@ -19,7 +19,8 @@ import dbus.service
 import array
 from enum import Enum
 
-from src.bluetooth_package.ble import find_adapter, Advertisement, Descriptor, Characteristic, Service
+from src.bluetooth_package.ble import find_adapter, Advertisement, Descriptor, Characteristic, Service, Agent, \
+    Application
 
 MainLoop = None
 try:
