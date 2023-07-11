@@ -46,10 +46,7 @@ logger.addHandler(logHandler)
 
 mainloop = None
 
-BLUEZ_SERVICE_NAME = "org.bluez"
-GATT_MANAGER_IFACE = "org.bluez.GattManager1"
-LE_ADVERTISEMENT_IFACE = "org.bluez.LEAdvertisement1"
-LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
+
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
@@ -70,15 +67,6 @@ class InvalidValueLengthException(dbus.exceptions.DBusException):
 
 class FailedException(dbus.exceptions.DBusException):
     _dbus_error_name = "org.bluez.Error.Failed"
-
-
-def register_app_cb():
-    logger.info("GATT application registered")
-
-
-def register_app_error_cb(error):
-    logger.critical("Failed to register application: " + str(error))
-    mainloop.quit()
 
 
 class JXNS1Service(Service):
@@ -184,18 +172,6 @@ class JXNAdvertisement(Advertisement):
         self.add_local_name("JXN")
         self.include_tx_power = True
 
-
-def register_ad_cb():
-    logger.info("Advertisement registered")
-
-
-def register_ad_error_cb(error):
-    logger.critical("Failed to register advertisement: " + str(error))
-    mainloop.quit()
-
-
-AGENT_PATH = "/com/punchthrough/agent"
-
 class JXNBluetoothService() :
     def __int__(self):
         self.bus = dbus.SystemBus()
@@ -204,66 +180,100 @@ class JXNBluetoothService() :
             logger.critical("GattManager1 interface not found")
             return
 
-def main():
-    global mainloop
+class BluetoothService:
+    AGENT_PATH = "/com/punchthrough/agent"
+    BLUEZ_SERVICE_NAME = "org.bluez"
+    GATT_MANAGER_IFACE = "org.bluez.GattManager1"
+    LE_ADVERTISEMENT_IFACE = "org.bluez.LEAdvertisement1"
+    LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
+    def __init__(self):
+        self.mainloop = None
 
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    def start(self):
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-    # get the system bus
-    bus = dbus.SystemBus()
-    # get the ble controller
-    adapter = find_adapter(bus)
+        # Get the system bus
+        bus = dbus.SystemBus()
 
-    if not adapter:
-        logger.critical("GattManager1 interface not found")
-        return
+        # Get the BLE controller
+        adapter = self.find_adapter(bus, self.BLUEZ_SERVICE_NAME, self.LE_ADVERTISING_MANAGER_IFACE)
+        if not adapter:
+            logger.critical("GattManager1 interface not found")
+            return
 
-    adapter_obj = bus.get_object(BLUEZ_SERVICE_NAME, adapter)
+        adapter_obj = bus.get_object(self.BLUEZ_SERVICE_NAME, adapter)
+        adapter_props = dbus.Interface(adapter_obj, "org.freedesktop.DBus.Properties")
 
-    adapter_props = dbus.Interface(adapter_obj, "org.freedesktop.DBus.Properties")
+        # Set powered property on the controller to on
+        adapter_props.Set("org.bluez.Adapter1", "Powered", dbus.Boolean(1))
 
-    # powered property on the controller to on
-    adapter_props.Set("org.bluez.Adapter1", "Powered", dbus.Boolean(1))
+        # Get manager objects
+        service_manager = dbus.Interface(adapter_obj, self.GATT_MANAGER_IFACE)
+        ad_manager = dbus.Interface(adapter_obj, self.LE_ADVERTISING_MANAGER_IFACE)
 
-    # Get manager objs
-    service_manager = dbus.Interface(adapter_obj, GATT_MANAGER_IFACE)
-    ad_manager = dbus.Interface(adapter_obj, LE_ADVERTISING_MANAGER_IFACE)
+        advertisement = JXNAdvertisement(bus, 0)
+        obj = bus.get_object(self.BLUEZ_SERVICE_NAME, "/org/bluez")
 
-    advertisement = JXNAdvertisement(bus, 0)
-    obj = bus.get_object(BLUEZ_SERVICE_NAME, "/org/bluez")
+        agent = Agent(bus, self.AGENT_PATH)
 
-    agent = Agent(bus, AGENT_PATH)
+        app = Application(bus)
+        app.add_service(JXNS1Service(bus, 2))
 
-    app = Application(bus)
-    app.add_service(JXNS1Service(bus, 2))
+        self.mainloop = GLib.MainLoop()
 
-    mainloop = MainLoop()
+        agent_manager = dbus.Interface(obj, "org.bluez.AgentManager1")
+        agent_manager.RegisterAgent(self.AGENT_PATH, "NoInputNoOutput")
 
-    agent_manager = dbus.Interface(obj, "org.bluez.AgentManager1")
-    agent_manager.RegisterAgent(AGENT_PATH, "NoInputNoOutput")
+        ad_manager.RegisterAdvertisement(
+            advertisement.get_path(),
+            {},
+            reply_handler=self.register_ad_cb,
+            error_handler=self.register_ad_error_cb,
+        )
 
-    ad_manager.RegisterAdvertisement(
-        advertisement.get_path(),
-        {},
-        reply_handler=register_ad_cb,
-        error_handler=register_ad_error_cb,
-    )
+        logger.info("Registering GATT application...")
 
-    logger.info("Registering GATT application...")
+        service_manager.RegisterApplication(
+            app.get_path(),
+            {},
+            reply_handler=self.register_app_cb,
+            error_handler=[self.register_app_error_cb],
+        )
 
-    service_manager.RegisterApplication(
-        app.get_path(),
-        {},
-        reply_handler=register_app_cb,
-        error_handler=[register_app_error_cb],
-    )
+        agent_manager.RequestDefaultAgent(self.AGENT_PATH)
 
-    agent_manager.RequestDefaultAgent(AGENT_PATH)
+        self.mainloop.run()
 
-    mainloop.run()
-    # ad_manager.UnregisterAdvertisement(advertisement)
-    # dbus.service.Object.remove_from_connection(advertisement)
+    @staticmethod
+    def find_adapter(bus, BLUEZ_SERVICE_NAME, LE_ADVERTISING_MANAGER_IFACE):
+        manager_obj = bus.get_object(BLUEZ_SERVICE_NAME, "/")
+        manager = dbus.Interface(manager_obj, "org.freedesktop.DBus.ObjectManager")
+        objects = manager.GetManagedObjects()
 
+        for obj, ifaces in objects.items():
+            adapter = ifaces.get(LE_ADVERTISING_MANAGER_IFACE)
+            if adapter:
+                return obj
 
-if __name__ == "__main__":
-    main()
+        return None
+
+    def register_ad_cb(self):
+        # Register Advertisement callback logic
+        logger.info("Advertisement registered")
+        pass
+
+    def register_ad_error_cb(self, error):
+        logger.critical("Failed to register advertisement: " + str(error))
+        self.mainloop.quit()
+        pass
+
+    def register_app_cb(self):
+        # Register Application callback logic
+        logger.info("GATT application registered")
+        pass
+
+    def register_app_error_cb(self, error):
+        # Register Application error callback logic
+        logger.critical("Failed to register application: " + str(error))
+        mainloop.quit()
+        pass
