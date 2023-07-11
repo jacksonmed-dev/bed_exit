@@ -102,8 +102,10 @@ class WifiPasswordCharacteristic(Characteristic):
     def ReadValue(self, options):
         logger.debug("power Read: " + repr(self.value))
         res = None
+        self.callback()
         try:
             # res = requests.get(JXNBaseUrl + "/sensor")
+
             self.value = bytearray("Setting your password complete", encoding="utf8")
         except Exception as e:
             logger.error(f"Error getting status {e}")
