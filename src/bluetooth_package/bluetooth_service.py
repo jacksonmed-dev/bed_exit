@@ -72,7 +72,7 @@ class JXNS1Service(Service):
 
     def __init__(self, bus, index, callback):
         Service.__init__(self, bus, index, self.WIFI_SVC_UUID, True)
-        self.add_characteristic(WifiPasswordCharacteristic(bus, 0, callback))
+        self.add_characteristic(WifiPasswordCharacteristic(bus, 0, callback, self))
 
 
 class WifiPasswordCharacteristic(Characteristic):
@@ -90,7 +90,7 @@ class WifiPasswordCharacteristic(Characteristic):
 
     power_options = {"ON", "OFF", "UNKNOWN"}
 
-    def __init__(self, bus, index, service, callback):
+    def __init__(self, bus, index, callback, service):
         Characteristic.__init__(
             self, bus, index, self.uuid, ["encrypt-read", "encrypt-write"], service,
         )
