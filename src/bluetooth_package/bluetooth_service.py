@@ -102,7 +102,6 @@ class WifiPasswordCharacteristic(Characteristic):
     def ReadValue(self, options):
         logger.debug("power Read: " + repr(self.value))
         res = None
-        self.callback()
         try:
             # res = requests.get(JXNBaseUrl + "/sensor")
 
@@ -117,6 +116,7 @@ class WifiPasswordCharacteristic(Characteristic):
         logger.debug("power Write: " + repr(value))
         cmd = bytes(value).decode("utf-8")
         logger.info(f"receiving command: {cmd}")
+        self.callback()
         if self.State.has_value(cmd):
             # write it to machine
             logger.info("writing {cmd} to machine")
