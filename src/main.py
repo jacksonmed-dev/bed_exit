@@ -5,8 +5,8 @@ import threading
 from sseclient import SSEClient
 from kinesis import KinesisClient
 from sensor import set_frequency, get_frames_within_window, format_sensor_data, delete_all_frames
-from wifi import disconnect_from_wifi_network, connect_to_wifi_network
 from bluetooth_package import BluetoothService
+from wifi import disconnect_from_wifi_network, connect_to_wifi_network
 
 
 is_present = False  # set the default value of is_present to True
@@ -89,8 +89,14 @@ def handle_storage_event(data):
         delete_all_frames()
     print("\n\n")
 
+def set_wifi(new_password):
+    print("HELLO I THINK I GOT IT WORKING!!!!!")
+    connect_to_wifi_network(network_ssid="Stanfield Wifi", network_password=new_password, wireless_interface="wlan1")
 
 if __name__ == '__main__':
+    service = BluetoothService(callback=set_wifi)
+    service.start()
+    print("non blocking")
     # disconnect_from_wifi_network(wireless_interface="wlan1")
     # connect_to_wifi_network(
     #     network_ssid=os.environ["SENSOR_SSID"],
@@ -100,5 +106,3 @@ if __name__ == '__main__':
     # set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
     # start_api_monitor_sse_client(KinesisClient())
 
-    service = BluetoothService()
-    service.start_service()
