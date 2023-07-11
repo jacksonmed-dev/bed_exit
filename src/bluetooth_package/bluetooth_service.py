@@ -163,7 +163,8 @@ class JXNAdvertisement(Advertisement):
         self.add_local_name("JXN")
         self.include_tx_power = True
 
-class JXNBluetoothService() :
+
+class JXNBluetoothService:
     def __int__(self):
         self.bus = dbus.SystemBus()
         self.adapter = find_adapter(self.bus)
@@ -171,12 +172,14 @@ class JXNBluetoothService() :
             logger.critical("GattManager1 interface not found")
             return
 
+
 class BluetoothService:
     AGENT_PATH = "/com/punchthrough/agent"
     BLUEZ_SERVICE_NAME = "org.bluez"
     GATT_MANAGER_IFACE = "org.bluez.GattManager1"
     LE_ADVERTISEMENT_IFACE = "org.bluez.LEAdvertisement1"
     LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
+
     def __init__(self):
         self.mainloop = None
 
@@ -266,5 +269,5 @@ class BluetoothService:
     def register_app_error_cb(self, error):
         # Register Application error callback logic
         logger.critical("Failed to register application: " + str(error))
-        mainloop.quit()
+        self.mainloop.quit()
         pass
