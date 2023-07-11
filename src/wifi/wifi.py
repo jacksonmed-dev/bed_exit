@@ -34,6 +34,13 @@ import subprocess
 import subprocess
 import time
 
+def restart_wireless_interface(wireless_interface):
+    # Disable the wireless interface
+    subprocess.run(["sudo", "ifconfig", wireless_interface, "down"])
+    time.sleep(1)
+    # Enable the wireless interface
+    subprocess.run(["sudo", "ifconfig", wireless_interface, "up"])
+    time.sleep(1)
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
@@ -59,6 +66,9 @@ def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "psk", f'"{network_password}"'])
     subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "enable_network", "0"])
     subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "save_config"])
+
+    # Restart the wireless interface
+    restart_wireless_interface(wireless_interface)
 
     # Wait until the connection is established
     while True:
