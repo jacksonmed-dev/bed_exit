@@ -117,18 +117,18 @@ class WifiPasswordCharacteristic(Characteristic):
         cmd = bytes(value).decode("utf-8")
         logger.info(f"receiving command: {cmd}")
         self.callback(cmd)
-        if self.State.has_value(cmd):
-            # write it to machine
-            logger.info("writing {cmd} to machine")
-            data = {"cmd": cmd.lower()}
-            try:
-                logger.info(f"state written {cmd}")
-                # res = requests.post(JXNBaseUrl + "/sensor/cmds", json=data)
-            except Exceptions as e:
-                logger.error(f"Error updating machine state: {e}")
-        else:
-            logger.info(f"invalid state written {cmd}")
-            raise NotPermittedException
+        # if self.State.has_value(cmd):
+        #     # write it to machine
+        #     logger.info("writing {cmd} to machine")
+        #     data = {"cmd": cmd.lower()}
+        #     try:
+        #         logger.info(f"state written {cmd}")
+        #         # res = requests.post(JXNBaseUrl + "/sensor/cmds", json=data)
+        #     except Exceptions as e:
+        #         logger.error(f"Error updating machine state: {e}")
+        # else:
+        #     logger.info(f"invalid state written {cmd}")
+        #     raise NotPermittedException
 
         self.value = value
 
