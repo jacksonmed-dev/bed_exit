@@ -19,7 +19,7 @@ import dbus.service
 import array
 from enum import Enum
 
-from ble import find_adapter, Advertisement, Descriptor, Characteristic, Service, Agent, Application
+from .ble import find_adapter, Advertisement, Descriptor, Characteristic, Service, Agent, Application
 
 MainLoop = None
 try:
