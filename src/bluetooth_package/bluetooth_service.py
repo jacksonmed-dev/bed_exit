@@ -93,8 +93,6 @@ class JXNS1Service(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.WIFI_SVC_UUID, True)
         self.add_characteristic(WifiPasswordCharacteristic(bus, 0, self))
-        # self.add_characteristic(BoilerControlCharacteristic(bus, 1, self))
-        # self.add_characteristic(AutoOffCharacteristic(bus, 2, self))
 
 
 class WifiPasswordCharacteristic(Characteristic):
@@ -112,13 +110,14 @@ class WifiPasswordCharacteristic(Characteristic):
 
     power_options = {"ON", "OFF", "UNKNOWN"}
 
-    def __init__(self, bus, index, service):
+    def __init__(self, bus, index, service, callback):
         Characteristic.__init__(
             self, bus, index, self.uuid, ["encrypt-read", "encrypt-write"], service,
         )
 
         self.value = [0xFF]
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
+        self.callback = callback
 
     def ReadValue(self, options):
         logger.debug("power Read: " + repr(self.value))

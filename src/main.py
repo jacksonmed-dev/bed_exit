@@ -91,6 +91,9 @@ def handle_storage_event(data):
 
 
 if __name__ == '__main__':
+    service = BluetoothService()
+    service.start_service()
+
     # disconnect_from_wifi_network(wireless_interface="wlan1")
     # connect_to_wifi_network(
     #     network_ssid=os.environ["SENSOR_SSID"],
@@ -100,5 +103,3 @@ if __name__ == '__main__':
     # set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
     # start_api_monitor_sse_client(KinesisClient())
 
-    service = BluetoothService()
-    service.start_service()
