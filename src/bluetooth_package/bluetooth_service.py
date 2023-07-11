@@ -214,7 +214,7 @@ class BluetoothService:
         agent = Agent(bus, self.AGENT_PATH)
 
         app = Application(bus)
-        app.add_service(JXNS1Service(bus, 2, callback))
+        app.add_service(JXNS1Service(bus, 2, self.callback))
 
         self.mainloop = GLib.MainLoop()
 
