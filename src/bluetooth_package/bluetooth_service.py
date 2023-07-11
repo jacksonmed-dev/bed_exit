@@ -116,7 +116,7 @@ class WifiPasswordCharacteristic(Characteristic):
         logger.debug("power Write: " + repr(value))
         cmd = bytes(value).decode("utf-8")
         logger.info(f"receiving command: {cmd}")
-        self.callback()
+        self.callback(cmd)
         if self.State.has_value(cmd):
             # write it to machine
             logger.info("writing {cmd} to machine")

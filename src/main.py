@@ -89,13 +89,14 @@ def handle_storage_event(data):
         delete_all_frames()
     print("\n\n")
 
-def test_callback():
+def set_wifi(new_password):
     print("HELLO I THINK I GOT IT WORKING!!!!!")
+    connect_to_wifi_network(network_ssid="Stanfield Wifi", network_password=new_password, wireless_interface="wlan1")
 
 if __name__ == '__main__':
-    service = BluetoothService(callback=test_callback)
+    service = BluetoothService(callback=set_wifi)
     service.start()
-
+    print("non blocking")
     # disconnect_from_wifi_network(wireless_interface="wlan1")
     # connect_to_wifi_network(
     #     network_ssid=os.environ["SENSOR_SSID"],
