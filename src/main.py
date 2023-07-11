@@ -5,8 +5,8 @@ import threading
 from sseclient import SSEClient
 from kinesis import KinesisClient
 from sensor import set_frequency, get_frames_within_window, format_sensor_data, delete_all_frames
+from src.bluetooth_package import BluetoothService
 from wifi import disconnect_from_wifi_network, connect_to_wifi_network
-from bluetooth_package import BluetoothService
 
 
 is_present = False  # set the default value of is_present to True
