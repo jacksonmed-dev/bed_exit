@@ -191,8 +191,8 @@ class BedExitMonitor:
         self.timer_thread.start()
 
     def start(self):
-        # self.bluetooth_service.start()
-        self.start_api_monitor_sse_client()
+        self.bluetooth_service.start()
+        # self.start_api_monitor_sse_client()
 
 if __name__ == '__main__':
     service = BedExitMonitor()
