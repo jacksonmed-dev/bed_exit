@@ -70,9 +70,9 @@ class JXNS1Service(Service):
 
     WIFI_SVC_UUID = "12634d89-d598-4874-8e86-7d042ee07ba7"
 
-    def __init__(self, bus, index):
+    def __init__(self, bus, index, callback):
         Service.__init__(self, bus, index, self.WIFI_SVC_UUID, True)
-        self.add_characteristic(WifiPasswordCharacteristic(bus, 0, self))
+        self.add_characteristic(WifiPasswordCharacteristic(bus, 0, callback))
 
 
 class WifiPasswordCharacteristic(Characteristic):
@@ -90,14 +90,14 @@ class WifiPasswordCharacteristic(Characteristic):
 
     power_options = {"ON", "OFF", "UNKNOWN"}
 
-    def __init__(self, bus, index, service):
+    def __init__(self, bus, index, service, callback):
         Characteristic.__init__(
             self, bus, index, self.uuid, ["encrypt-read", "encrypt-write"], service,
         )
 
         self.value = [0xFF]
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
-        # self.callback = callback
+        self.callback = callback
 
     def ReadValue(self, options):
         logger.debug("power Read: " + repr(self.value))
@@ -181,8 +181,9 @@ class BluetoothService:
     LE_ADVERTISEMENT_IFACE = "org.bluez.LEAdvertisement1"
     LE_ADVERTISING_MANAGER_IFACE = "org.bluez.LEAdvertisingManager1"
 
-    def __init__(self):
+    def __init__(self, callback):
         self.mainloop = None
+        self.callback = callback
 
     def start(self):
         print("starting")
@@ -213,7 +214,7 @@ class BluetoothService:
         agent = Agent(bus, self.AGENT_PATH)
 
         app = Application(bus)
-        app.add_service(JXNS1Service(bus, 2))
+        app.add_service(JXNS1Service(bus, 2, callback))
 
         self.mainloop = GLib.MainLoop()
 

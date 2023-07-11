@@ -89,9 +89,11 @@ def handle_storage_event(data):
         delete_all_frames()
     print("\n\n")
 
+def test_callback():
+    print("HELLO I THINK I GOT IT WORKING!!!!!")
 
 if __name__ == '__main__':
-    service = BluetoothService()
+    service = BluetoothService(callback=test_callback)
     service.start()
 
     # disconnect_from_wifi_network(wireless_interface="wlan1")
