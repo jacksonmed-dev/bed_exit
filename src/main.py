@@ -92,7 +92,7 @@ def handle_storage_event(data):
 
 if __name__ == '__main__':
     service = BluetoothService()
-    service.start_service()
+    service.start()
 
     # disconnect_from_wifi_network(wireless_interface="wlan1")
     # connect_to_wifi_network(
