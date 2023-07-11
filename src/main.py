@@ -109,28 +109,29 @@ class BedExitMonitor:
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
-    def set_wifi(self, new_password):
-        print("HELLO I THINK I GOT IT WORKING!!!!!")
-        connect_to_wifi_network(network_ssid="Stanfield Wifi", network_password=new_password, wireless_interface="wlan1")
-
     # Example controller function
     def ble_controller(self, parsed_info):
         if parsed_info == 'start':
             # Start the monitoring
-            # self.start_api_monitor_sse_client()
             print("starting the api monitor")
+            self.start_api_monitor_sse_client()
         elif parsed_info == 'stop':
             # Stop the monitoring
-            # self.stop_api_monitor_sse_client()
             print("stopping the api")
+            self.stop_api_monitor_sse_client()
+        elif parsed_info == "wifi":
+            print("initializing sensor wifi conection")
+            connect_to_wifi_network(network_ssid="DataPort-BT2-2764-103-000107", network_password="boditr@k", wireless_interface="wlan1")
 
     def start_api_monitor_sse_client(self):
+        print("starting the sse client")
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
             data = response.data.strip()
             if response.event == 'body':
-                self.handle_body_event(data)
+                print("############## BODY EVENT ###############")
+                # self.handle_body_event(data)
             if response.event == 'newframe':
                 self.handle_new_frame_event(data)
             if response.event == 'storage':
@@ -191,7 +192,7 @@ class BedExitMonitor:
 
     def start(self):
         self.bluetooth_service.start()
-        self.start_api_monitor_sse_client()
+        # self.start_api_monitor_sse_client()
 
 if __name__ == '__main__':
     service = BedExitMonitor()
