@@ -90,14 +90,14 @@ class WifiPasswordCharacteristic(Characteristic):
 
     power_options = {"ON", "OFF", "UNKNOWN"}
 
-    def __init__(self, bus, index, service, callback):
+    def __init__(self, bus, index, service):
         Characteristic.__init__(
             self, bus, index, self.uuid, ["encrypt-read", "encrypt-write"], service,
         )
 
         self.value = [0xFF]
         self.add_descriptor(CharacteristicUserDescriptionDescriptor(bus, 1, self))
-        self.callback = callback
+        # self.callback = callback
 
     def ReadValue(self, options):
         logger.debug("power Read: " + repr(self.value))
