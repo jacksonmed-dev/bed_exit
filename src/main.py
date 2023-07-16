@@ -111,17 +111,18 @@ class BedExitMonitor:
 
     # Example controller function
     def ble_controller(self, parsed_info):
-        if parsed_info == 'start':
+        input_array = parsed_info.split(',')
+        if input_array[0] == 'start':
             # Start the monitoring
             print("starting the api monitor")
             self.start_api_monitor_sse_client()
-        elif parsed_info == 'stop':
+        elif input_array[0] == 'stop':
             # Stop the monitoring
             print("stopping the api")
             self.stop_api_monitor_sse_client()
-        elif parsed_info == "wifi":
+        elif input_array[0] == "wifi":
             print("initializing sensor wifi conection")
-            connect_to_wifi_network(network_ssid="DataPort-BT2-2764-103-000107", network_password="boditr@k", wireless_interface="wlan1")
+            connect_to_wifi_network(network_ssid=input_array[1], network_password=input_array[2], wireless_interface="wlan1")
 
     def start_api_monitor_sse_client(self):
         print("starting the sse client")
