@@ -134,7 +134,7 @@ class BedExitMonitor:
             data = response.data.strip()
             if response.event == 'body':
                 print("############## BODY EVENT ###############")
-                # self.handle_body_event(data)
+                self.handle_body_event(data)
             if response.event == 'newframe':
                 self.handle_new_frame_event(data)
             if response.event == 'storage':
