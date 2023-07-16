@@ -121,7 +121,7 @@ class BedExitMonitor:
             print("stopping the api")
             self.stop_api_monitor_sse_client()
         elif input_array[0] == "wifi":
-            print("initializing sensor wifi conection")
+            print("initializing sensor wifi connection")
             connect_to_wifi_network(network_ssid=input_array[1], network_password=input_array[2], wireless_interface="wlan1")
 
     def start_api_monitor_sse_client(self):
