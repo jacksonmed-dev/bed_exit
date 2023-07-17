@@ -3,17 +3,9 @@ import time
 
 
 def restart_wireless_interface(wireless_interface):
-    # Restart the wpa_supplicant service with the updated configuration
-    subprocess.run(["sudo", "systemctl", "restart", "wpa_supplicant"])
-    time.sleep(1)
-
     # Disable the wireless interface
-    subprocess.run(["sudo", "ifconfig", wireless_interface, "down"])
+    subprocess.run(["sudo", "wpa_cli", "-i", wireless_interface, "reconfigure"])
     time.sleep(2)
-
-    # Enable the wireless interface
-    subprocess.run(["sudo", "ifconfig", wireless_interface, "up"])
-    time.sleep(1)
 
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
