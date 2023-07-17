@@ -1,6 +1,10 @@
 import os
 import boto3
 import json
+
+import requests
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,15 +13,37 @@ load_dotenv()
 class KinesisClient:
 
     def __init__(self):
-        self.kinesis_client = self.get_auth_client("kinesis")
-
-    # See options for authenticating here: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials
-    def get_auth_client(self, service_name):
-        session = boto3.Session(
+        self.session = boto3.Session(
             aws_access_key_id=os.environ["ACCESS_KEY_ID"],
             aws_secret_access_key=os.environ["ACCESS_KEY_SECRET"],
         )
-        return session.client(
+        self.kinesis_client = self.get_auth_client("kinesis")
+
+    def signed_request_v2(self, endpoint, dataObj):
+        sigv4 = SigV4Auth(self.session.get_credentials(), "execute-api", "us-west-2")
+        data = json.dumps(dataObj)
+        headers = {"Content-Type": "application/x-amz-json-1.1"}
+        request = AWSRequest(
+            method="POST",
+            url=endpoint,
+            data=data,
+            headers=headers,
+        )
+        # request.context["payload_signing_enabled"] = False
+        sigv4.add_auth(request)
+
+        prepped = request.prepare()
+
+        response = requests.post(
+            prepped.url,
+            headers=prepped.headers,
+            data=data,
+        )
+        print(response.text)
+
+    # See options for authenticating here: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials
+    def get_auth_client(self, service_name):
+        return self.session.client(
             service_name,
             region_name=os.environ["AWS_REGION"],
         )
