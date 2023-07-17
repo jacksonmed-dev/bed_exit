@@ -22,6 +22,30 @@ def set_frequency(new_frequency):
         return False  # or raise an exception, depending on your requirements
 
 
+def set_rotation_interval(new_interval):
+    url = f"{sensor_url}/api/monitor/attended/interval"
+    headers = {"Content-Type": "application/json"}
+    payload = new_interval
+    response1 = requests.put(url, headers=headers, json=payload)
+
+    if response1.status_code == 204:
+        return True
+    else:
+        return False  # or raise an exception, depending on your requirements
+
+
+def reset_rotation_interval():
+    url = f"{sensor_url}/api/monitor/attended/ok"
+    headers = {"Content-Type": "application/json"}
+    payload = True
+    response1 = requests.put(url, headers=headers, json=payload)
+
+    if response1.status_code == 204:
+        return True
+    else:
+        return False  #
+
+
 def delete_all_frames():
     url = f"{sensor_url}/api/monitor/frames"
     response = requests.delete(url)

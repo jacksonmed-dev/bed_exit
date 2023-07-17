@@ -2,6 +2,8 @@
 
 source ./venv/bin/activate
 
+sudo apt install python3-dbus
+
 pip3 install -r requirements.txt
 
 # Make the Raspberry Pi discoverable
