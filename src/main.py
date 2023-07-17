@@ -76,7 +76,7 @@ class BedExitMonitor:
             if not is_ok:
                 print("Calling backend")
                 self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
-                                                      {"eventType": "turnTimerExpire", "sensorId": os.environ["SENSOR_SSID"]})
+                                                      {"eventType": "turnTimerExpire", "sensorId": "s1"})
                 reset_rotation_interval()
         else:
             reset_rotation_interval()
@@ -96,7 +96,7 @@ class BedExitMonitor:
             print("--- PATIENT EXIT DETECTED ---")
             print("---- SENDING EXIT EVENT -----")
             self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
-                                                  {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
+                                                  {"eventType": "bedExit", "sensorId": "s1"})
             self.run_update_patient_presence()
             frames = get_frames_within_window(self.frame_id)
             formatted_data = format_sensor_data(frames, self.is_present, frequency=int(os.environ["SENSOR_FREQUENCY"]))
