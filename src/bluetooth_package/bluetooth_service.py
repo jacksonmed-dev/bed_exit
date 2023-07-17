@@ -77,7 +77,7 @@ class JXNS1Service(Service):
 
 class WifiPasswordCharacteristic(Characteristic):
     uuid = "4116f8d2-9f66-4f58-a53d-fc7440e7c14e"
-    description = b"Get/set machine power state {'ON', 'OFF', 'UNKNOWN'}"
+    description = b"Set Facility's Wifi password"
 
     class State(Enum):
         on = "ON"
@@ -105,7 +105,7 @@ class WifiPasswordCharacteristic(Characteristic):
         try:
             # res = requests.get(JXNBaseUrl + "/sensor")
 
-            self.value = bytearray("Setting your password complete", encoding="utf8")
+            self.value = bytearray("Set password with format 'wifi,SSID,psk'", encoding="utf8")
         except Exception as e:
             logger.error(f"Error getting status {e}")
             self.value = bytearray(self.State.unknown, encoding="utf8")
