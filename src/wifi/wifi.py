@@ -36,11 +36,12 @@ country=US
 network={{
     ssid="{network_ssid}"
     psk="{network_password}"
-}}"""
+}}
+"""
 
     print("Writing new wpa_supplicant file")
     # Write the configuration file to disk
-    with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
+    with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as f:
         f.write(config_text)
 
     # Restart the wireless interface

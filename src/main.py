@@ -2,6 +2,7 @@ import json
 import os
 import threading
 from time import sleep
+import logging
 
 from botocore.auth import SigV4Auth
 from sseclient import SSEClient
@@ -11,6 +12,16 @@ from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
     set_rotation_interval, reset_rotation_interval
 from wifi import connect_to_wifi_network
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logHandler = logging.StreamHandler()
+filelogHandler = logging.FileHandler("logs.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logHandler.setFormatter(formatter)
+filelogHandler.setFormatter(formatter)
+logger.addHandler(filelogHandler)
+logger.addHandler(logHandler)
 
 
 class BedExitMonitor:
@@ -34,20 +45,20 @@ class BedExitMonitor:
         input_array = parsed_info.split(',')
         if input_array[0] == 'start':
             # Start the monitoring
-            print("starting the api monitor")
+            logger.info("starting the api monitor")
             self.initialize_default_sensor()
             self.start_api_monitor_sse_client()
         elif input_array[0] == 'stop':
             # Stop the monitoring
-            print("stopping the api")
+            logger.info("stopping the api")
             self.stop_api_monitor_sse_client()
         elif input_array[0] == "wifi":
-            print("initializing sensor wifi connection")
+            logger.info("initializing sensor wifi connection")
             connect_to_wifi_network(network_ssid=input_array[1], network_password=input_array[2],
-                                    wireless_interface="wlan1")
+                                    wireless_interface="wlan0")
 
     def start_api_monitor_sse_client(self):
-        print("starting the sse client")
+        logger.info("starting the sse client")
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
@@ -55,7 +66,7 @@ class BedExitMonitor:
             if response.event == "attended":
                 self.handle_attended_event(data)
             if response.event == 'body':
-                print("############## BODY EVENT ###############")
+                logger.info("############## BODY EVENT ###############")
                 self.handle_body_event(data)
             if response.event == 'newframe':
                 self.handle_new_frame_event(data)
@@ -70,9 +81,9 @@ class BedExitMonitor:
     def handle_attended_event(self, data):
         is_ok = json.loads(data)['ok']
         if self.is_present:
-            print(data)
+            logger.info(data)
             if not is_ok:
-                print("Calling backend")
+                logger.info("Calling backend")
                 self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
                                                       {"eventType": "turnTimerExpire", "sensorId": "s1"})
                 reset_rotation_interval()
@@ -80,19 +91,19 @@ class BedExitMonitor:
             reset_rotation_interval()
 
     def handle_body_event(self, data):
-        print("############## BODY EVENT ###############")
+        logger.info("############## BODY EVENT ###############")
         self.is_sensor_present = json.loads(data)['present']
-        print(f"sensor patient present:\t{self.is_sensor_present}")
-        print(f"pi patient present:\t{self.is_present}")
+        logger.info(f"sensor patient present:\t{self.is_sensor_present}")
+        logger.info(f"pi patient present:\t{self.is_present}")
 
         if self.is_timer_enabled and self.timer_thread is not None:
-            print("Cancelling Timer... Body event detected before timer expired")
+            logger.info("Cancelling Timer... Body event detected before timer expired")
             self.timer_thread.cancel()
             self.run_update_patient_presence()
 
         if self.is_present and not self.is_sensor_present and not self.is_timer_enabled:
-            print("--- PATIENT EXIT DETECTED ---")
-            print("---- SENDING EXIT EVENT -----")
+            logger.info("--- PATIENT EXIT DETECTED ---")
+            logger.info("---- SENDING EXIT EVENT -----")
             self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
                                                   {"eventType": "bedExit", "sensorId": "s1"})
             self.run_update_patient_presence()
@@ -101,33 +112,33 @@ class BedExitMonitor:
             self.kinesis_client.put_records(formatted_data)
 
         if not self.is_present and self.is_sensor_present and not self.is_timer_enabled:
-            print("--- PATIENT ENTRY DETECTED ---")
+            logger.info("--- PATIENT ENTRY DETECTED ---")
             self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
                                                   {"eventType": "bedEntry", "sensorId": "s1"})
             self.run_update_patient_presence()
 
         if not self.is_timer_enabled:
             self.is_present = self.is_sensor_present
-        print("\n\n")
+        logger.info("\n\n")
 
     def handle_new_frame_event(self, data):
         self.frame_id = json.loads(data)['id']
 
     def handle_storage_event(self, data):
-        print("############## STORAGE EVENT ###############")
+        logger.info("############## STORAGE EVENT ###############")
         storage_field = json.loads(data)['used']
-        print(f"Storage Used: {storage_field}%")
+        logger.info(f"Storage Used: {storage_field}%")
         if storage_field > 85:
             delete_all_frames()
-        print("\n\n")
+        logger.info("\n\n")
 
     def update_patient_presence(self):
-        print(f"Updating pi is_present to {self.is_sensor_present}")
+        logger.info(f"Updating pi is_present to {self.is_sensor_present}")
         self.is_present = self.is_sensor_present
         self.is_timer_enabled = False
 
     def run_update_patient_presence(self):
-        print("Starting new timer...")
+        logger.info("Starting new timer...")
         self.is_timer_enabled = True
         self.timer_thread = threading.Timer(10, self.update_patient_presence)
         self.timer_thread.start()
