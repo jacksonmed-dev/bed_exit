@@ -3,6 +3,9 @@ import time
 
 
 def restart_wireless_interface(wireless_interface):
+    subprocess.run(["sudo", "systemctl", "restart", f"wpa_supplicant@{wireless_interface}"])
+    time.sleep(2)
+
     # Disable the wireless interface
     subprocess.run(["sudo", "wpa_cli", "-i", wireless_interface, "reconfigure"])
     time.sleep(2)
