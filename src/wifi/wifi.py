@@ -1,6 +1,16 @@
+import logging
 import subprocess
 import time
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logHandler = logging.StreamHandler()
+filelogHandler = logging.FileHandler("logs.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logHandler.setFormatter(formatter)
+filelogHandler.setFormatter(formatter)
+logger.addHandler(filelogHandler)
+logger.addHandler(logHandler)
 
 def restart_wireless_interface(wireless_interface):
     subprocess.run(["sudo", "systemctl", "restart", f"wpa_supplicant@{wireless_interface}"])
@@ -27,7 +37,7 @@ def enable_wireless_interface(wireless_interface):
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
-    print("network ssid: ", network_ssid)
+    logger.info("network ssid: ", network_ssid)
     config_text = \
         f"""
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -39,7 +49,7 @@ network={{
 }}
 """
 
-    print("Writing new wpa_supplicant file")
+    logger.info("Writing new wpa_supplicant file")
     # Write the configuration file to disk
     with open("/etc/wpa_supplicant/wpa_supplicant.conf", "w") as f:
         f.write(config_text)
@@ -52,18 +62,18 @@ network={{
         status = subprocess.check_output(["sudo", "wpa_cli", "-i", wireless_interface, "status"]).decode("utf-8")
         status_dict = dict(line.split("=") for line in status.splitlines() if "=" in line)
         if status_dict.get("ssid") == network_ssid:
-            print("Successfully connected to WiFi network")
+            logger.info("Successfully connected to WiFi network")
             break
         time.sleep(1)
 
 
 def disconnect_from_wifi_network(wireless_interface):
     # Get the current network id for wlan1
-    print("Running disconnecting wifi")
+    logger.info("Running disconnecting wifi")
 
     cmd = ["sudo", "wpa_cli", "-i", wireless_interface, "list_networks"]
     output = subprocess.check_output(cmd, universal_newlines=True)
-    print("Disconnecting wlan1 output: ", output)
+    logger.info("Disconnecting wlan1 output: ", output)
     network_id = None
     for line in output.splitlines()[1:]:
         fields = line.split()
@@ -72,7 +82,7 @@ def disconnect_from_wifi_network(wireless_interface):
             break
 
     # If a network is currently connected, disconnect from it
-    print("disconnecting wlan1 network connection")
+    logger.info("disconnecting wlan1 network connection")
     if network_id is not None:
         subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "disable_network", network_id])
         subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "remove_network", network_id])
