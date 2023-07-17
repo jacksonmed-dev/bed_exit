@@ -26,7 +26,7 @@ class BedExitMonitor:
 
         # Initialize BluetoothService and Kinesis client here
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
-        # self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
+        self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
     # Example controller function
     def ble_controller(self, parsed_info):
