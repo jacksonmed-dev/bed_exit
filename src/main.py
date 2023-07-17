@@ -29,7 +29,8 @@ class BedExitMonitor:
 
         # Initialize the sensor default values
         set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
-        set_rotation_interval(10)
+        set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
+        reset_rotation_interval()
 
     # Example controller function
     def ble_controller(self, parsed_info):
@@ -76,6 +77,8 @@ class BedExitMonitor:
         if not is_ok:
             print("resetting timer")
             print(data)
+            self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
+                                                  {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
             reset_rotation_interval()
 
     def handle_body_event(self, data):
