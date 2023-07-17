@@ -55,8 +55,6 @@ class BedExitMonitor:
         for response in self.sse_client:
             data = response.data.strip()
             if response.event == "attended":
-                # print("### Attended EVENT ####")
-                # print(data)
                 self.handle_attended_event(data)
             if response.event == 'body':
                 print("############## BODY EVENT ###############")
@@ -73,7 +71,6 @@ class BedExitMonitor:
 
     def handle_attended_event(self, data):
         is_ok = json.loads(data)['ok']
-        print("is present: ", self.is_present)
         if self.is_present:
             print(data)
             if not is_ok:
