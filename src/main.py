@@ -58,14 +58,13 @@ class BedExitMonitor:
                 print("### Attended EVENT ####")
                 print(data)
                 self.handle_attended_event(data)
-
-            # if response.event == 'body':
-            #     print("############## BODY EVENT ###############")
-            #     self.handle_body_event(data)
-            # if response.event == 'newframe':
-            #     self.handle_new_frame_event(data)
-            # if response.event == 'storage':
-            #     self.handle_storage_event(data)
+            if response.event == 'body':
+                print("############## BODY EVENT ###############")
+                self.handle_body_event(data)
+            if response.event == 'newframe':
+                self.handle_new_frame_event(data)
+            if response.event == 'storage':
+                self.handle_storage_event(data)
 
     def stop_api_monitor_sse_client(self):
         if self.sse_client is not None:
