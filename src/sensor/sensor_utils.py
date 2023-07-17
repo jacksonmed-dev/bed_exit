@@ -34,6 +34,18 @@ def set_rotation_interval(new_interval):
         return False  # or raise an exception, depending on your requirements
 
 
+def reset_rotation_interval():
+    url = f"{sensor_url}/api/monitor/attended/ok"
+    headers = {"Content-Type": "application/json"}
+    payload = True
+    response1 = requests.put(url, headers=headers, json=payload)
+
+    if response1.status_code == 204:
+        return True
+    else:
+        return False  #
+
+
 def delete_all_frames():
     url = f"{sensor_url}/api/monitor/frames"
     response = requests.delete(url)

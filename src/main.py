@@ -7,7 +7,7 @@ from sseclient import SSEClient
 
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
-from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, set_rotation_interval
+from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, set_rotation_interval, reset_rotation_interval
 from wifi import connect_to_wifi_network
 
 
@@ -54,8 +54,10 @@ class BedExitMonitor:
         for response in self.sse_client:
             data = response.data.strip()
             if response.event == "attended":
-                print("### {} EVENT ####".format(response.event))
+                print("### Attended EVENT ####")
                 print(data)
+                self.handle_attended_event(data)
+
             # if response.event == 'body':
             #     print("############## BODY EVENT ###############")
             #     self.handle_body_event(data)
@@ -68,6 +70,13 @@ class BedExitMonitor:
         if self.sse_client is not None:
             self.sse_client.close()
             self.sse_client = None
+
+    def handle_attended_event(self, data):
+        is_ok = json.loads(data)['ok']
+        if not is_ok:
+            print("resetting timer")
+            print(data)
+            reset_rotation_interval()
 
     def handle_body_event(self, data):
         print("############## BODY EVENT ###############")
