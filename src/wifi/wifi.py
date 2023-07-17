@@ -10,6 +10,20 @@ def restart_wireless_interface(wireless_interface):
     subprocess.run(["sudo", "wpa_cli", "-i", wireless_interface, "reconfigure"])
     time.sleep(2)
 
+    subprocess.run(["sudo", "ifconfig", "-i", wireless_interface, "reconfigure"])
+    time.sleep(2)
+
+    enable_wireless_interface("wlan0")
+    time.sleep(2)
+
+    enable_wireless_interface("wlan1")
+    time.sleep(2)
+
+
+def enable_wireless_interface(wireless_interface):
+    # Enable the wireless interface
+    subprocess.run(["sudo", "ifconfig", wireless_interface, "up"])
+
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
