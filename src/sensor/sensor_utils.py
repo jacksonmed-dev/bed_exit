@@ -35,6 +35,7 @@ def set_rotation_interval(new_interval):
 
 
 def reset_rotation_interval():
+    print("############## Resetting interval ###############")
     url = f"{sensor_url}/api/monitor/attended/ok"
     headers = {"Content-Type": "application/json"}
     payload = True

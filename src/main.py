@@ -75,11 +75,11 @@ class BedExitMonitor:
     def handle_attended_event(self, data):
         is_ok = json.loads(data)['ok']
         if not is_ok:
-            print("resetting timer")
-            print(data)
-            self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
-                                                  {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
-            reset_rotation_interval()
+            if self.is_present:
+                print(data)
+                self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
+                                                      {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
+        reset_rotation_interval()
 
     def handle_body_event(self, data):
         print("############## BODY EVENT ###############")
