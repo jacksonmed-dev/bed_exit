@@ -7,8 +7,7 @@ from sseclient import SSEClient
 
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
-from sensor import get_frames_within_window, format_sensor_data, delete_all_frames
-from src.sensor import set_frequency, set_rotation_interval
+from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, set_rotation_interval
 from wifi import connect_to_wifi_network
 
 
