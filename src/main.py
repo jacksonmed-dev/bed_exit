@@ -76,7 +76,7 @@ class BedExitMonitor:
             if not is_ok:
                 print("Calling backend")
                 self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
-                                                      {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
+                                                      {"eventType": "turnTimerExpire", "sensorId": os.environ["SENSOR_SSID"]})
                 reset_rotation_interval()
         else:
             reset_rotation_interval()
