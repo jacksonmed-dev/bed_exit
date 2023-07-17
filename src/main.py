@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from time import sleep
 
 from botocore.auth import SigV4Auth
 from sseclient import SSEClient
@@ -34,6 +35,7 @@ class BedExitMonitor:
         if input_array[0] == 'start':
             # Start the monitoring
             print("starting the api monitor")
+            self.initialize_default_sensor()
             self.start_api_monitor_sse_client()
         elif input_array[0] == 'stop':
             # Stop the monitoring
@@ -41,9 +43,8 @@ class BedExitMonitor:
             self.stop_api_monitor_sse_client()
         elif input_array[0] == "wifi":
             print("initializing sensor wifi connection")
-            connect_to_wifi_network(network_ssid="DataPort-BT2-2764103-000107", network_password="boditr@k",
+            connect_to_wifi_network(network_ssid="DataPort-BT2-2764-103-000107", network_password="boditr@k",
                                     wireless_interface="wlan1")
-            self.initialize_default_sensor()
 
     def start_api_monitor_sse_client(self):
         print("starting the sse client")
