@@ -104,6 +104,8 @@ class BedExitMonitor:
 
         if not self.is_present and self.is_sensor_present and not self.is_timer_enabled:
             print("--- PATIENT ENTRY DETECTED ---")
+            self.kinesis_client.signed_request_v2(os.environ["EVENT_ENDPOINT"],
+                                                  {"eventType": "bedEntry", "sensorId": "s1"})
             self.run_update_patient_presence()
 
         if not self.is_timer_enabled:
