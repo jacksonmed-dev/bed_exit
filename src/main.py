@@ -139,8 +139,8 @@ class BedExitMonitor:
 
 if __name__ == '__main__':
     service = BedExitMonitor()
-    # service.start()
-    service.start_api_monitor_sse_client()
+    service.start()
+    # service.start_api_monitor_sse_client()
     # disconnect_from_wifi_network(wireless_interface="wlan1")
     # connect_to_wifi_network(
     #     network_ssid=os.environ["SENSOR_SSID"],
