@@ -7,7 +7,8 @@ from sseclient import SSEClient
 
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
-from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, set_rotation_interval, reset_rotation_interval
+from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
+    set_rotation_interval, reset_rotation_interval
 from wifi import connect_to_wifi_network
 
 
@@ -27,11 +28,6 @@ class BedExitMonitor:
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
-        # Initialize the sensor default values
-        set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
-        set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
-        reset_rotation_interval()
-
     # Example controller function
     def ble_controller(self, parsed_info):
         input_array = parsed_info.split(',')
@@ -47,6 +43,7 @@ class BedExitMonitor:
             print("initializing sensor wifi connection")
             connect_to_wifi_network(network_ssid="DataPort-BT2-2764103-000107", network_password="boditr@k",
                                     wireless_interface="wlan1")
+            self.initialize_default_sensor()
 
     def start_api_monitor_sse_client(self):
         print("starting the sse client")
@@ -133,6 +130,12 @@ class BedExitMonitor:
         self.is_timer_enabled = True
         self.timer_thread = threading.Timer(10, self.update_patient_presence)
         self.timer_thread.start()
+
+    def initialize_default_sensor(self):
+        # Initialize the sensor default values
+        set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
+        set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
+        reset_rotation_interval()
 
     def start(self):
         self.bluetooth_service.start()
