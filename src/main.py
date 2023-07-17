@@ -8,6 +8,7 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames
+from src.sensor import set_frequency, set_rotation_interval
 from wifi import connect_to_wifi_network
 
 
@@ -112,6 +113,10 @@ class BedExitMonitor:
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
+        # Initialize the sensor default values
+        set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
+        set_rotation_interval(10)
+
     # Example controller function
     def ble_controller(self, parsed_info):
         input_array = parsed_info.split(',')
@@ -133,13 +138,14 @@ class BedExitMonitor:
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
             data = response.data.strip()
-            if response.event == 'body':
-                print("############## BODY EVENT ###############")
-                self.handle_body_event(data)
-            if response.event == 'newframe':
-                self.handle_new_frame_event(data)
-            if response.event == 'storage':
-                self.handle_storage_event(data)
+            print("### {} EVENT ####".format(response.event))
+            # if response.event == 'body':
+            #     print("############## BODY EVENT ###############")
+            #     self.handle_body_event(data)
+            # if response.event == 'newframe':
+            #     self.handle_new_frame_event(data)
+            # if response.event == 'storage':
+            #     self.handle_storage_event(data)
 
     def stop_api_monitor_sse_client(self):
         if self.sse_client is not None:
@@ -211,5 +217,4 @@ if __name__ == '__main__':
     #     network_password=os.environ["SENSOR_PASSWORD"],
     #     wireless_interface=os.environ["WIRELESS_INTERFACE"]
     # )
-    # set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
     # start_api_monitor_sse_client(KinesisClient())
