@@ -9,7 +9,7 @@ def restart_wireless_interface(wireless_interface):
 
     # Disable the wireless interface
     subprocess.run(["sudo", "ifconfig", wireless_interface, "down"])
-    time.sleep(1)
+    time.sleep(2)
 
     # Enable the wireless interface
     subprocess.run(["sudo", "ifconfig", wireless_interface, "up"])
