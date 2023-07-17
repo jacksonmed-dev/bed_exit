@@ -194,7 +194,7 @@ class BedExitMonitor:
     def run_update_patient_presence(self):
         print("Starting new timer...")
         self.is_timer_enabled = True
-        self.timer_thread = threading.Timer(60, self.update_patient_presence)
+        self.timer_thread = threading.Timer(10, self.update_patient_presence)
         self.timer_thread.start()
 
     def start(self):
