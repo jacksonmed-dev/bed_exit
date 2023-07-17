@@ -62,27 +62,27 @@ def restart_wireless_interface(wireless_interface):
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
     print("network ssid: ", network_ssid)
-    config_text = f"""
-    ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-    update_config=1
-    country=US
-    network={{
-        ssid="{network_ssid}"
-        psk="{network_password}"
-    }}
-    """
+    config_text = \
+        f"""
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=US
+network={{
+    ssid="{network_ssid}"
+    psk="{network_password}"
+}}"""
 
     print("Writing new wpa_supplicant file")
     # Write the configuration file to disk
     with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
         f.write(config_text)
 
-    # Start the wpa_cli process and add the new network configuration
-    subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "add_network"])
-    subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "ssid", f'"{network_ssid}"'])
-    subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "psk", f'"{network_password}"'])
-    subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "enable_network", "0"])
-    subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "save_config"])
+    # # Start the wpa_cli process and add the new network configuration
+    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "add_network"])
+    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "ssid", f'"{network_ssid}"'])
+    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "psk", f'"{network_password}"'])
+    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "enable_network", "0"])
+    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "save_config"])
 
     # Restart the wireless interface
     restart_wireless_interface(wireless_interface)
