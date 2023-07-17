@@ -1,58 +1,15 @@
 import subprocess
-
-# def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
-#     # Generate the configuration file
-#     config_text = f"""
-#     ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
-#     update_config=1
-#     country=US
-#     network={{
-#         ssid="{network_ssid}"
-#         psk="{network_password}"
-#     }}
-#     """
-#
-#
-#
-#     # Write the configuration file to disk
-#     with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
-#         f.write(config_text)
-#
-#     # Start the wpa_supplicant process
-#     process = subprocess.Popen(
-#         ["sudo", "wpa_supplicant", "-i", wireless_interface, "-c", "/etc/wpa_supplicant/wpa_supplicant-wlan1.conf"])
-#
-#     # Wait for the process to complete
-#     process.wait()
-#
-#     # If the process returns a non-zero exit code, there was an error
-#     if process.returncode != 0:
-#         print("Failed to connect to WiFi network")
-#     else:
-#         print("Successfully connected to WiFi network")
-
-import subprocess
 import time
 
 
 def restart_wireless_interface(wireless_interface):
+    # Restart the wpa_supplicant service with the updated configuration
+    subprocess.run(["sudo", "systemctl", "restart", "wpa_supplicant"])
+    time.sleep(1)
+
     # Disable the wireless interface
     subprocess.run(["sudo", "ifconfig", wireless_interface, "down"])
     time.sleep(1)
-
-    # # Flush the IP address of the wireless interface
-    # subprocess.run(["sudo", "ip", "addr", "flush", "dev", wireless_interface])
-    # time.sleep(1)
-
-    # Restart the wpa_supplicant service with the updated configuration
-    subprocess.run(["sudo", "systemctl", "stop", f"wpa_supplicant@{wireless_interface}.service"])
-    time.sleep(1)
-    subprocess.run(["sudo", "systemctl", "start", f"wpa_supplicant@{wireless_interface}.service"])
-    time.sleep(1)
-
-    # # Request a new IP address for the wireless interface using DHCP
-    # subprocess.run(["sudo", "dhclient", wireless_interface])
-    # time.sleep(1)
 
     # Enable the wireless interface
     subprocess.run(["sudo", "ifconfig", wireless_interface, "up"])
@@ -76,13 +33,6 @@ network={{
     # Write the configuration file to disk
     with open("/etc/wpa_supplicant/wpa_supplicant-wlan1.conf", "w") as f:
         f.write(config_text)
-
-    # # Start the wpa_cli process and add the new network configuration
-    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "add_network"])
-    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "ssid", f'"{network_ssid}"'])
-    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "set_network", "0", "psk", f'"{network_password}"'])
-    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "enable_network", "0"])
-    # subprocess.Popen(["sudo", "wpa_cli", "-i", wireless_interface, "save_config"])
 
     # Restart the wireless interface
     restart_wireless_interface(wireless_interface)
