@@ -6,8 +6,8 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
-    set_rotation_interval, reset_rotation_interval
-from wifi import connect_to_wifi_network
+    set_rotation_interval, reset_rotation_interval, check_sensor_connection
+from wifi import connect_to_wifi_network, check_internet_connection
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -60,6 +60,11 @@ class BedExitMonitor:
                                                   {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
     def start_api_monitor_sse_client(self):
+        self.initialize_default_sensor()
+
+        if self.sse_client is not None:
+            self.stop_api_monitor_sse_client()
+
         logger.info("starting the sse client")
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
@@ -68,7 +73,6 @@ class BedExitMonitor:
             if response.event == "attended":
                 self.handle_attended_event(data)
             if response.event == 'body':
-                logger.info("############## BODY EVENT ###############")
                 self.handle_body_event(data)
             if response.event == 'newframe':
                 self.handle_new_frame_event(data)
@@ -77,6 +81,7 @@ class BedExitMonitor:
 
     def stop_api_monitor_sse_client(self):
         if self.sse_client is not None:
+            logger.info("Closing the sensor sse client")
             self.sse_client.close()
             self.sse_client = None
 
@@ -93,13 +98,9 @@ class BedExitMonitor:
             reset_rotation_interval()
 
     def handle_body_event(self, data):
-        logger.info("############## BODY EVENT ###############")
         self.is_sensor_present = json.loads(data)['present']
-        logger.info(f"sensor patient present:\t{self.is_sensor_present}")
-        logger.info(f"pi patient present:\t{self.is_present}")
 
         if self.is_timer_enabled and self.timer_thread is not None:
-            logger.info("Cancelling Timer... Body event detected before timer expired")
             self.timer_thread.cancel()
             self.run_update_patient_presence()
 
@@ -140,20 +141,29 @@ class BedExitMonitor:
         self.is_timer_enabled = False
 
     def run_update_patient_presence(self):
-        logger.info("Starting new timer...")
         self.is_timer_enabled = True
         self.timer_thread = threading.Timer(10, self.update_patient_presence)
         self.timer_thread.start()
 
     def initialize_default_sensor(self):
         # Initialize the sensor default values
+        logger.info("Initializing Sensor Values")
         set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
         set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
         reset_rotation_interval()
 
+
     def start(self):
-        self.bluetooth_service.start()
-        # self.start_api_monitor_sse_client()
+        # Start the Bluetooth service in a separate thread
+        bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
+        bluetooth_thread.start()
+
+        # Continue with the rest of your code
+        is_network_connected = check_internet_connection()
+        is_sensor_connected = check_sensor_connection()
+        if is_network_connected and is_sensor_connected:
+            self.initialize_default_sensor()
+            self.start_api_monitor_sse_client()
 
 
 if __name__ == '__main__':

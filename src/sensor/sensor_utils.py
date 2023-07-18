@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
@@ -6,6 +7,16 @@ from datetime import datetime
 import requests
 
 sensor_url = os.environ["SENSOR_URL"]
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logHandler = logging.StreamHandler()
+filelogHandler = logging.FileHandler("logs.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logHandler.setFormatter(formatter)
+filelogHandler.setFormatter(formatter)
+logger.addHandler(filelogHandler)
+logger.addHandler(logHandler)
 
 
 def set_frequency(new_frequency):
@@ -50,9 +61,9 @@ def delete_all_frames():
     url = f"{sensor_url}/api/monitor/frames"
     response = requests.delete(url)
     if response.status_code == 204:
-        print("All frames deleted successfully.")
+        logger.info("All frames deleted successfully.")
     else:
-        print("Failed to delete frames. Status code:", response.status_code)
+        logger.error("Failed to delete frames. Status code:", response.status_code)
 
 
 def get_frames_within_window(frame_id):
@@ -114,3 +125,12 @@ def format_readings(readings):
         }
         output_array.append(output_obj)
     return output_array
+
+
+def check_sensor_connection():
+    url = f"{sensor_url}/api/monitor/frames"
+    response = requests.delete(url)
+    if response.status_code == 204:
+        return True
+    else:
+        return False
