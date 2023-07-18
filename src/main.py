@@ -40,24 +40,30 @@ class BedExitMonitor:
     # Example controller function
     def ble_controller(self, parsed_info):
         input_array = parsed_info.split(',')
-        if input_array[0] == 'start':
-            # Start the monitoring
-            logger.info("starting the api monitor")
-            self.initialize_default_sensor()
-            self.start_api_monitor_sse_client()
-        elif input_array[0] == 'stop':
-            # Stop the monitoring
-            logger.info("stopping the api")
-            self.stop_api_monitor_sse_client()
-        elif input_array[0] == "wifi":
-            logger.info("initializing sensor wifi connection")
-            connect_to_wifi_network(network_ssid=input_array[1], network_password=input_array[2],
-                                    wireless_interface="wlan0")
-        elif input_array[0] == "bed_id":
-            logger.info("setting the bed id")
-            self.bed_id = input_array[1]
-            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
-                                                  {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
+
+        if not input_array:
+            return  # Empty array, nothing to do
+
+        command = input_array[0].lower()
+        if command == 'start':
+            if len(input_array) >= 1:
+                self.start_api_monitor_sse_client()
+        elif command == 'stop':
+            if len(input_array) >= 1:
+                self.stop_api_monitor_sse_client()
+        elif command == "wifi":
+            if len(input_array) >= 3:
+                network_ssid, network_password = input_array[1:3]
+                logger.info("initializing sensor wifi connection")
+                connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
+                                        wireless_interface="wlan0")
+        elif command == "bed_id":
+            if len(input_array) >= 2:
+                bed_id = input_array[1]
+                self.bed_id = bed_id
+                logger.info("setting the bed id: ", self.bed_id)
+                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
+                                                      {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
     def start_api_monitor_sse_client(self):
         self.initialize_default_sensor()

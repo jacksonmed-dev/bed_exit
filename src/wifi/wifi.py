@@ -37,7 +37,7 @@ def enable_wireless_interface(wireless_interface):
 
 def connect_to_wifi_network(network_ssid, network_password, wireless_interface):
     # Generate the configuration file
-    logger.info("network ssid: ", network_ssid)
+    logger.info("initializing sensor wifi connection")
     config_text = \
         f"""
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -48,7 +48,7 @@ network={{
     psk="{network_password}"
 }}
 """
-
+    logger.info("Writing the following configuration:\n", config_text)
     logger.info("Writing new wpa_supplicant file")
     # Write the configuration file to disk
     with open(f"/etc/wpa_supplicant/wpa_supplicant-{wireless_interface}.conf", "w") as f:
