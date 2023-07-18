@@ -1,3 +1,4 @@
+import logging
 import os
 import boto3
 import json
@@ -9,6 +10,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logHandler = logging.StreamHandler()
+filelogHandler = logging.FileHandler("logs.log")
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logHandler.setFormatter(formatter)
+filelogHandler.setFormatter(formatter)
+logger.addHandler(filelogHandler)
+logger.addHandler(logHandler)
 
 class KinesisClient:
 
@@ -19,12 +29,12 @@ class KinesisClient:
         )
         self.kinesis_client = self.get_auth_client("kinesis")
 
-    def signed_request_v2(self, endpoint, dataObj):
+    def signed_request_v2(self, endpoint, dataObj, method='POST'):
         sigv4 = SigV4Auth(self.session.get_credentials(), "execute-api", "us-west-2")
         data = json.dumps(dataObj)
         headers = {"Content-Type": "application/x-amz-json-1.1"}
         request = AWSRequest(
-            method="POST",
+            method=method,
             url=endpoint,
             data=data,
             headers=headers,
@@ -39,7 +49,7 @@ class KinesisClient:
             headers=prepped.headers,
             data=data,
         )
-        print(response.text)
+        logger.info(response.text)
 
     # See options for authenticating here: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials
     def get_auth_client(self, service_name):
@@ -78,17 +88,17 @@ class KinesisClient:
             # ),
             # StreamARN=os.environ["STREAM_ARN"]
         )
-        print(f"Wrote record successfully")
+        logger.info(f"Wrote record successfully")
 
     def put_records(self, records):
-        print("############# KINESIS #############")
-        print("sending records to kinesis")
+        logger.info("############# KINESIS #############")
+        logger.info("sending records to kinesis")
         records_result = self.kinesis_client.put_records(
             Records=records,
             StreamName=os.environ["STREAM_NAME"],
             # StreamARN=os.environ["STREAM_ARN"]
         )
 
-        print(f"Wrote all records successfully")
-        print("############ END KINESIS ###########")
+        logger.info(f"Wrote all records successfully")
+        logger.info("############ END KINESIS ###########")
 
