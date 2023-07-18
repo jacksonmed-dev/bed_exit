@@ -131,6 +131,8 @@ def check_sensor_connection():
     url = f"{sensor_url}/api/monitor/frames"
     response = requests.delete(url)
     if response.status_code == 204:
+        logger.info("Sensor Connection: Valid")
         return True
     else:
+        logger.info("Sensor Connection: Invalid")
         return False
