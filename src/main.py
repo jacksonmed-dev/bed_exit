@@ -86,7 +86,7 @@ class BedExitMonitor:
             logger.info(data)
             if not is_ok:
                 logger.info("Calling backend")
-                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/event",
+                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                                       {"eventType": "turnTimerExpire", "sensorId": os.environ["SENSOR_SSID"]})
                 reset_rotation_interval()
         else:

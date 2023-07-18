@@ -44,12 +44,20 @@ class KinesisClient:
 
         prepped = request.prepare()
 
-        response = requests.post(
-            prepped.url,
-            headers=prepped.headers,
-            data=data,
-        )
-        logger.info(response.text)
+        if method == 'POST':
+            response = requests.post(
+                prepped.url,
+                headers=prepped.headers,
+                data=data,
+            )
+            logger.info(response.text)
+        if method == 'PATCH':
+            response = requests.patch(
+                prepped.url,
+                headers=prepped.headers,
+                data=data,
+            )
+            logger.info(response.text)
 
     # See options for authenticating here: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#credentials
     def get_auth_client(self, service_name):
