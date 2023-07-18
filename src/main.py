@@ -57,6 +57,11 @@ class BedExitMonitor:
                 logger.info("initializing sensor wifi connection")
                 connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
                                         wireless_interface="wlan0")
+                is_network_connected = check_internet_connection()
+                is_sensor_connected = check_sensor_connection()
+                if is_network_connected and is_sensor_connected:
+                    self.initialize_default_sensor()
+                    self.start_api_monitor_sse_client()
         elif command == "bed_id":
             if len(input_array) >= 2:
                 bed_id = input_array[1]
@@ -164,7 +169,6 @@ class BedExitMonitor:
         bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
         bluetooth_thread.start()
 
-        # Continue with the rest of your code
         is_network_connected = check_internet_connection()
         is_sensor_connected = check_sensor_connection()
         if is_network_connected and is_sensor_connected:
@@ -175,11 +179,3 @@ class BedExitMonitor:
 if __name__ == '__main__':
     service = BedExitMonitor()
     service.start()
-    # service.start_api_monitor_sse_client()
-    # disconnect_from_wifi_network(wireless_interface="wlan1")
-    # connect_to_wifi_network(
-    #     network_ssid=os.environ["SENSOR_SSID"],
-    #     network_password=os.environ["SENSOR_PASSWORD"],
-    #     wireless_interface=os.environ["WIRELESS_INTERFACE"]
-    # )
-    # start_api_monitor_sse_client(KinesisClient())
