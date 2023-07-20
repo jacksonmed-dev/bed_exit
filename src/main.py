@@ -81,7 +81,6 @@ class BedExitMonitor:
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
             data = response.data.strip()
-            logger.info(response.event)
             if response.event == "attended":
                 self.handle_attended_event(data)
             if response.event == 'body':
