@@ -114,7 +114,7 @@ class BedExitMonitor:
 
     def handle_body_event(self, data):
         self.is_sensor_present = json.loads(data)['present']
-        logger.info("body event: ", data)
+        logger.info(f"body event: {data}")
 
         if self.is_timer_enabled and self.timer_thread is not None:
             self.timer_thread.cancel()
