@@ -7,6 +7,7 @@ from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
     set_rotation_interval, reset_rotation_interval, check_sensor_connection
+from src.lcd_display import scroll_text
 from wifi import connect_to_wifi_network, check_internet_connection
 from lcd_display import display_message
 
@@ -181,4 +182,5 @@ class BedExitMonitor:
 if __name__ == '__main__':
     # service = BedExitMonitor()
     # service.start()
-    display_message("Hello World")
+    # display_message("Hello World")
+    scroll_text("This is a longer message. Will it scroll?")
