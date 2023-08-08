@@ -85,6 +85,7 @@ class BedExitMonitor:
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
             data = response.data.strip()
+            logger.info("Event Received: ", response.event)
             if response.event == "attended":
                 self.handle_attended_event(data)
             if response.event == 'body':
@@ -170,18 +171,18 @@ class BedExitMonitor:
 
 
     def start(self):
-        # # Start the Bluetooth service in a separate thread
-        # bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
-        # bluetooth_thread.start()
-        #
-        # is_network_connected = check_internet_connection()
-        # is_sensor_connected = check_sensor_connection()
-        # if is_network_connected and is_sensor_connected:
-        #     self.initialize_default_sensor()
-        #     self.start_api_monitor_sse_client()
-        scroll_text(self.status_text, 1, speed=0.1)
-        time.sleep(1)
-        self.status_text = "Updated Text...."
+        # Start the Bluetooth service in a separate thread
+        bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
+        bluetooth_thread.start()
+
+        is_network_connected = check_internet_connection()
+        is_sensor_connected = check_sensor_connection()
+        if is_network_connected and is_sensor_connected:
+            self.initialize_default_sensor()
+            self.start_api_monitor_sse_client()
+        # scroll_text(self.status_text, 1, speed=0.1)
+        # time.sleep(1)
+        # self.status_text = "Updated Text...."
 
 
 if __name__ == '__main__':
