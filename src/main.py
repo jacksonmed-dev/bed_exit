@@ -2,6 +2,8 @@ import json
 import os
 import threading
 import logging
+import time
+
 from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
@@ -37,6 +39,7 @@ class BedExitMonitor:
         # Initialize BluetoothService and Kinesis client here
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
+        self.status_text = "Initial Text....."
 
     # Example controller function
     def ble_controller(self, parsed_info):
@@ -167,19 +170,20 @@ class BedExitMonitor:
 
 
     def start(self):
-        # Start the Bluetooth service in a separate thread
-        bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
-        bluetooth_thread.start()
-
-        is_network_connected = check_internet_connection()
-        is_sensor_connected = check_sensor_connection()
-        if is_network_connected and is_sensor_connected:
-            self.initialize_default_sensor()
-            self.start_api_monitor_sse_client()
+        # # Start the Bluetooth service in a separate thread
+        # bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
+        # bluetooth_thread.start()
+        #
+        # is_network_connected = check_internet_connection()
+        # is_sensor_connected = check_sensor_connection()
+        # if is_network_connected and is_sensor_connected:
+        #     self.initialize_default_sensor()
+        #     self.start_api_monitor_sse_client()
+        scroll_text(self.status_text, 1, speed=0.1)
+        time.sleep(1)
+        self.status_text = "Updated Text...."
 
 
 if __name__ == '__main__':
-    # service = BedExitMonitor()
-    # service.start()
-    # display_message("Hello World")
-    scroll_text("This is a longer message. Will it scroll?", 1, speed=0.1)
+    service = BedExitMonitor()
+    service.start()
