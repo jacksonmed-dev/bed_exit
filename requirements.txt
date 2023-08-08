@@ -4,3 +4,4 @@ requests
 sseclient
 PyGObject
 dbus-python
+rpi_lcd
