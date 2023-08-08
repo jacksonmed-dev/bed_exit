@@ -182,4 +182,4 @@ if __name__ == '__main__':
     # service = BedExitMonitor()
     # service.start()
     # display_message("Hello World")
-    scroll_text("This is a longer message. Will it scroll?", 1)
+    scroll_text("This is a longer message. Will it scroll?", 1, speed=0.1)
