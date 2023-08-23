@@ -5,3 +5,4 @@ sseclient
 PyGObject
 dbus-python
 rpi_lcd
+RPi.GPIO

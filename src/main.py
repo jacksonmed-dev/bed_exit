@@ -11,6 +11,7 @@ from sensor import get_frames_within_window, format_sensor_data, delete_all_fram
     set_rotation_interval, reset_rotation_interval, check_sensor_connection
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
+from gpio import turn_relay_off, turn_relay_on
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,7 +41,6 @@ class BedExitMonitor:
         # Initialize BluetoothService and Kinesis client here
         self.bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
-        self.status_text = "Initial Text....."
 
     # Example controller function
     def ble_controller(self, parsed_info):
@@ -178,8 +178,6 @@ class BedExitMonitor:
 
         self.lcd_manager.set_lines("Validating Connections...", "")
         time.sleep(2)
-        self.lcd_manager.set_lines(f"Sensor Connection: false", "Test line 2")
-
         is_network_connected = check_internet_connection()
         is_sensor_connected = check_sensor_connection()
 
@@ -187,11 +185,12 @@ class BedExitMonitor:
         if is_network_connected and is_sensor_connected:
             self.initialize_default_sensor()
             self.start_api_monitor_sse_client()
-        # scroll_text(self.status_text, 1, speed=0.1)
-        # time.sleep(1)
-        # self.status_text = "Updated Text...."
 
 
 if __name__ == '__main__':
-    service = BedExitMonitor()
-    service.start()
+    # service = BedExitMonitor()
+    # service.start()
+    turn_relay_on(4)
+    time.sleep(2)
+    turn_relay_off(4)
+
