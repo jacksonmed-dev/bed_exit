@@ -193,5 +193,6 @@ class BedExitMonitor:
 if __name__ == '__main__':
     service = BedExitMonitor()
     scroll_text("Starting...", line=1)
+    logger.info("TEST LOG")
     time.sleep(2)
     service.start()
