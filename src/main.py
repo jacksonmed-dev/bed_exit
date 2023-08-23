@@ -61,7 +61,7 @@ class BedExitMonitor:
                 if time_since_last_update > 20:
                     logger.error("Sensor Connection lost... Attempting to reconnect")
                     self.stop_api_monitor_sse_client()
-                    threading.Thread(target=self.sensor_recovery()).start()
+                    threading.Thread(target=self.sensor_recovery).start()
 
             # check network connection
             is_network_connected = check_internet_connection()
