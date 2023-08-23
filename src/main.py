@@ -184,7 +184,7 @@ class BedExitMonitor:
         is_sensor_connected = check_sensor_connection()
 
         self.lcd_manager.start(f"Sensor Connection: {is_sensor_connected}", line=1)
-        self.lcd_manager.start(f"Wifi Connection: {is_network_connected}", line=1)
+        self.lcd_manager.start(f"Wifi Connection: {is_network_connected}", line=2)
         if is_network_connected and is_sensor_connected:
             self.initialize_default_sensor()
             self.start_api_monitor_sse_client()
