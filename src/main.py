@@ -61,7 +61,6 @@ class BedExitMonitor:
                 time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
                 if time_since_last_update > 20:
                     logger.error("Sensor Connection lost... Attempting to reconnect")
-                    self.stop_api_monitor_sse_client()
                     threading.Thread(target=self.sensor_recovery).start()
 
             # check network connection
@@ -76,6 +75,7 @@ class BedExitMonitor:
         is_sensor_connected = check_sensor_connection()
         if is_sensor_connected:
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
+            self.stop_api_monitor_sse_client()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
         else:
@@ -176,11 +176,7 @@ class BedExitMonitor:
             self.sse_client = None
 
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
-            # Signal the thread to stop (you need to implement a mechanism for this in your thread function)
-            # For example, you can set a flag that the thread checks periodically.
             self.api_monitor_sse_client_thread_stop_flag = True
-
-            # Wait for the thread to finish
             self.api_monitor_sse_client_thread.join()
 
         self.api_monitor_sse_client_thread = None
