@@ -139,6 +139,6 @@ def check_sensor_connection():
         else:
             logger.info("Sensor Connection: Invalid")
             return False
-    except requests.exceptions as e:
+    except Exception as e:
         logger.error("Error while checking sensor connection:", e)
         return False
