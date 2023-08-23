@@ -176,15 +176,14 @@ class BedExitMonitor:
         bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
         bluetooth_thread.start()
 
-        self.lcd_manager.start("Validating Connections...", line=1)
+        self.lcd_manager.set_lines("Validating Connections...", "")
         time.sleep(2)
-        self.lcd_manager.start(f"Sensor Connection: false", line=1)
+        self.lcd_manager.set_lines(f"Sensor Connection: false", "Test line 2")
 
         is_network_connected = check_internet_connection()
         is_sensor_connected = check_sensor_connection()
 
-        self.lcd_manager.start(f"Sensor Connection: {is_sensor_connected}", line=1)
-        self.lcd_manager.start(f"Wifi Connection: {is_network_connected}", line=2)
+        self.lcd_manager.set_lines(f"Sensor Connection: {is_sensor_connected}", f"Wifi Connection: {is_network_connected}")
         if is_network_connected and is_sensor_connected:
             self.initialize_default_sensor()
             self.start_api_monitor_sse_client()

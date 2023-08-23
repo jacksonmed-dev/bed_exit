@@ -8,32 +8,34 @@ lcd = LCD()
 
 
 class ScrollingText:
-    def __init__(self, num_lines=2):
-        self._num_lines = num_lines
-        self._scroll_threads = [None] * num_lines
+    def __init__(self):
+        self._thread = None
+        self._line1 = ""
+        self._line2 = ""
         self._stop_event = threading.Event()
 
-    def _scroll_thread(self, text, line, speed):
-        text = text + " " * 16
-        text_length = len(text)
-
+    def _scroll_thread(self):
         while not self._stop_event.is_set():
-            for i in range(text_length - 16 + 1):
-                if self._stop_event.is_set():
-                    break
-                lcd.text(text[i:i + 16], line)
-                time.sleep(speed)
+            if self._line1 or self._line2:
+                if self._line1:
+                    lcd.text(self._line1, 1)
+                if self._line2:
+                    lcd.text(self._line2, 2)
+                time.sleep(0.5)  # Sleep to control scroll speed
+                lcd.clear()
 
-    def start(self, text, line, speed=0.5):
-        line -= 1  # Adjust line index to 0-based
-
-        if self._scroll_threads[line] is not None and self._scroll_threads[line].is_alive():
-            self._stop_event.set()
-            self._scroll_threads[line].join()
+    def set_lines(self, line1, line2):
+        self._line1 = line1
+        self._line2 = line2
+        if self._thread is None or not self._thread.is_alive():
             self._stop_event.clear()
+            self._thread = threading.Thread(target=self._scroll_thread)
+            self._thread.start()
 
-        self._scroll_threads[line] = threading.Thread(target=self._scroll_thread, args=(text, line, speed))
-        self._scroll_threads[line].start()
+    def stop(self):
+        self._stop_event.set()
+        if self._thread is not None:
+            self._thread.join()
 
 
 def safe_exit(signum, frame):
