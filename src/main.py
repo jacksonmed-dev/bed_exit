@@ -45,6 +45,7 @@ class BedExitMonitor:
         # SSE Client
         self.api_monitor_sse_client_thread = None
         self.sse_client = None
+        self.api_monitor_sse_client_thread_stop_flag = False
         self.sse_client_last_updated_at = datetime.now()
 
         # Monitor
@@ -125,33 +126,63 @@ class BedExitMonitor:
                                                       {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
     def api_monitor_sse_client(self):
-        self.initialize_default_sensor()
-
         if self.sse_client is not None:
             self.stop_api_monitor_sse_client()
 
         logger.info("starting the sse client")
+        self.initialize_default_sensor()
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
-        for response in self.sse_client:
-            self.sse_client_last_updated_at = datetime.now()
-            data = response.data.strip()
-            logger.info(f"Event Received: {response.event}")
-            if response.event == "attended":
-                self.handle_attended_event(data)
-            if response.event == 'body':
-                self.handle_body_event(data)
-            if response.event == 'newframe':
-                self.handle_new_frame_event(data)
-            if response.event == 'storage':
-                self.handle_storage_event(data)
+
+        # Timer to periodically check the stopping flag
+        def check_stopping_flag():
+            while not self.api_monitor_sse_client_thread_stop_flag:
+                time.sleep(1)  # Adjust the interval as needed
+
+            # If flag is set, close the SSE client and exit
+            self.sse_client.close()
+            self.sse_client = None
+
+        stopping_flag_timer = threading.Thread(target=check_stopping_flag)
+        stopping_flag_timer.start()
+
+        try:
+            for response in self.sse_client:
+                self.sse_client_last_updated_at = datetime.now()
+                data = response.data.strip()
+                logger.info(f"Event Received: {response.event}")
+                if response.event == "attended":
+                    self.handle_attended_event(data)
+                if response.event == 'body':
+                    self.handle_body_event(data)
+                if response.event == 'newframe':
+                    self.handle_new_frame_event(data)
+                if response.event == 'storage':
+                    self.handle_storage_event(data)
+
+        except Exception as e:
+            print("Exception in SSEClient loop:", e)
+
+        finally:
+            # Clean up and exit the thread
+            stopping_flag_timer.join()  # Wait for the flag checking thread to finish
+            self.sse_client.close()
+            self.sse_client = None
 
     def stop_api_monitor_sse_client(self):
         if self.sse_client is not None:
-            logger.info("Closing the sensor sse client")
+            logger.info("Closing the sensor SSE client")
             self.sse_client.close()
             self.sse_client = None
-        self.api_monitor_sse_client_thread.close()
+
+        if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
+            # Signal the thread to stop (you need to implement a mechanism for this in your thread function)
+            # For example, you can set a flag that the thread checks periodically.
+            self.api_monitor_sse_client_thread_stop_flag = True
+
+            # Wait for the thread to finish
+            self.api_monitor_sse_client_thread.join()
+
         self.api_monitor_sse_client_thread = None
 
     def handle_attended_event(self, data):
