@@ -3,6 +3,7 @@ import os
 import threading
 import logging
 import time
+from datetime import datetime
 
 from sseclient import SSEClient
 from bluetooth_package import BluetoothService
@@ -37,13 +38,60 @@ class BedExitMonitor:
         self.gpio_pin = 4
 
         # Store the SSEClient
-        self.sse_client = None
 
         # Initialize BluetoothService and Kinesis client here
-        self.bluetooth_service = BluetoothService(callback=self.ble_controller)
+        self.bluetooth_service_thread = None
+
+        # SSE Client
+        self.api_monitor_sse_client_thread = None
+        self.sse_client = None
+        self.sse_client_last_updated_at = datetime.now()
+
+        # Monitor
+        self.monitor_thread = None
+
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
-    # Example controller function
+    def status_monitor(self):
+        # self.lcd_manager.set_lines(f"Sensor Connection: {is_sensor_connected}", f"Wifi Connection: {is_network_connected}")
+        while True:
+            # check sensor connection
+            if self.sse_client_last_updated_at is not None:
+                time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
+                if time_since_last_update > 20:
+                    logger.error("Sensor Connection lost... Attempting to reconnect")
+                    self.stop_api_monitor_sse_client()
+                    threading.Thread(target=self.sensor_recovery()).start()
+
+            # check network connection
+            is_network_connected = check_internet_connection()
+            if not is_network_connected:
+                logger.error("Wifi Connection lost... Attempting to reconnect")
+
+            # check bluetooth status
+            time.sleep(1)
+
+    def sensor_recovery(self):
+        is_sensor_connected = check_sensor_connection()
+        if is_sensor_connected:
+            # This means the sse client stopped working. But the connection still exists. Restart the sse client
+            self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+            self.api_monitor_sse_client_thread.start()
+        else:
+            # cycle the sensor.
+            turn_relay_on(self.gpio_pin)
+            time.sleep(5)
+            turn_relay_off(self.gpio_pin)
+            # Wait for sensor to connect
+            is_sensor_connected = check_sensor_connection()
+            for i in range(50):
+                is_sensor_connected = check_sensor_connection()
+                if is_sensor_connected:
+                    break
+                time.sleep(10)
+
+            # Example controller function
+
     def ble_controller(self, parsed_info):
         input_array = parsed_info.split(',')
 
@@ -53,7 +101,7 @@ class BedExitMonitor:
         command = input_array[0].lower()
         if command == 'start':
             if len(input_array) >= 1:
-                self.start_api_monitor_sse_client()
+                self.api_monitor_sse_client()
         elif command == 'stop':
             if len(input_array) >= 1:
                 self.stop_api_monitor_sse_client()
@@ -67,7 +115,7 @@ class BedExitMonitor:
                 is_sensor_connected = check_sensor_connection()
                 if is_network_connected and is_sensor_connected:
                     self.initialize_default_sensor()
-                    self.start_api_monitor_sse_client()
+                    self.api_monitor_sse_client()
         elif command == "bed_id":
             if len(input_array) >= 2:
                 bed_id = input_array[1]
@@ -76,7 +124,7 @@ class BedExitMonitor:
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
                                                       {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
-    def start_api_monitor_sse_client(self):
+    def api_monitor_sse_client(self):
         self.initialize_default_sensor()
 
         if self.sse_client is not None:
@@ -86,6 +134,7 @@ class BedExitMonitor:
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
         for response in self.sse_client:
+            self.sse_client_last_updated_at = datetime.now()
             data = response.data.strip()
             logger.info(f"Event Received: {response.event}")
             if response.event == "attended":
@@ -102,6 +151,8 @@ class BedExitMonitor:
             logger.info("Closing the sensor sse client")
             self.sse_client.close()
             self.sse_client = None
+        self.api_monitor_sse_client_thread.close()
+        self.api_monitor_sse_client_thread = None
 
     def handle_attended_event(self, data):
         is_ok = json.loads(data)['ok']
@@ -171,24 +222,22 @@ class BedExitMonitor:
         set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
         reset_rotation_interval()
 
-
     def start(self):
         # Start the Bluetooth service in a separate thread
-        bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
-        bluetooth_thread.start()
+        bluetooth_service = BluetoothService(callback=self.ble_controller)
+        self.bluetooth_thread = threading.Thread(target=bluetooth_service.start)
+        self.bluetooth_thread.start()
 
-        self.lcd_manager.set_lines("Validating Connections...", "")
-        time.sleep(2)
-        is_network_connected = check_internet_connection()
-        is_sensor_connected = check_sensor_connection()
+        # Start the API Monitor
+        self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+        self.api_monitor_sse_client_thread.start()
 
-        self.lcd_manager.set_lines(f"Sensor Connection: {is_sensor_connected}", f"Wifi Connection: {is_network_connected}")
-        if is_network_connected and is_sensor_connected:
-            self.initialize_default_sensor()
-            self.start_api_monitor_sse_client()
+        self.monitor_thread = threading.Thread(target=self.status_monitor)
+        self.monitor_thread.start()
+
+
 
 
 if __name__ == '__main__':
     service = BedExitMonitor()
     service.start()
-
