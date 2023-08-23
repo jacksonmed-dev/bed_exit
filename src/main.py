@@ -9,7 +9,7 @@ from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
     set_rotation_interval, reset_rotation_interval, check_sensor_connection
-from lcd_display import scroll_text
+from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ logger.addHandler(logHandler)
 
 class BedExitMonitor:
     def __init__(self):
+        self.lcd_manager = ScrollingText()
         self.bed_id = None
         self.is_present = False
         self.is_sensor_present = False
@@ -175,13 +176,13 @@ class BedExitMonitor:
         bluetooth_thread = threading.Thread(target=self.bluetooth_service.start)
         bluetooth_thread.start()
 
-        scroll_text("Validating Connections...", line=1)
+        self.lcd_manager.start("Validating Connections...", line=1)
         time.sleep(2)
         is_network_connected = check_internet_connection()
         is_sensor_connected = check_sensor_connection()
 
-        scroll_text(f"Wifi Connection: {is_network_connected}", line=1)
-        scroll_text(f"Sensor Connection: {is_sensor_connected}", line=1)
+        self.lcd_manager.start(f"Sensor Connection: {is_sensor_connected}", line=1)
+        self.lcd_manager.start(f"Wifi Connection: {is_network_connected}", line=1)
         if is_network_connected and is_sensor_connected:
             self.initialize_default_sensor()
             self.start_api_monitor_sse_client()
@@ -192,7 +193,4 @@ class BedExitMonitor:
 
 if __name__ == '__main__':
     service = BedExitMonitor()
-    scroll_text("Starting...", line=1)
-    logger.info("TEST LOG")
-    time.sleep(2)
     service.start()

@@ -1,50 +1,56 @@
+import threading
 import time
-from signal import signal, SIGTERM, SIGHUP, pause
 from rpi_lcd import LCD
+from signal import signal, SIGTERM, SIGHUP
 
+# Initialize the LCD
 lcd = LCD()
 
 
-def display_message(message):
-    def safe_exit(signum, frame):
-        exit(1)
 
-    try:
-        signal(SIGTERM, safe_exit)
-        signal(SIGHUP, safe_exit)
 
-        lcd.text(message, 1)
-        lcd.text("", 2)
+# Define the scrolling function with built-in threading
+class ScrollingText:
+    def __init__(self):
+        self._stop_event = threading.Event()
+        self._text = ""
+        self._line = 0
+        self._speed = 0.5
+        self._thread = None
 
-        pause()
+    def _scroll_thread(self):
+        text = self._text + " " * 16
+        text_length = len(text)
 
-    except KeyboardInterrupt:
-        pass
+        while not self._stop_event.is_set():
+            for i in range(text_length - 16 + 1):
+                if self._stop_event.is_set():
+                    break
+                lcd.text(text[i:i + 16], self._line)
+                time.sleep(self._speed)
 
-    finally:
-        lcd.clear()
+    def start(self, text, line, speed=0.5):
+        self._stop_event.set()
+
+        if self._thread is not None:
+            self._thread.join()
+
+        self._text = text
+        self._line = line
+        self._speed = speed
+        self._stop_event.clear()
+
+        self._thread = threading.Thread(target=self._scroll_thread)
+        self._thread.start()
 
 
 def safe_exit(signum, frame):
-    exit(1)
+    lcd.clear()
+    exit(0)
 
 
-def scroll_text(text, line, speed=0.5):
-    text = text + " " * 16  # Add padding to the end of the text
-    text_length = len(text)
-
-    try:
-        signal(SIGTERM, safe_exit)
-        signal(SIGHUP, safe_exit)
-
-        while True:
-            for i in range(text_length - 16 + 1):
-                lcd.text(text[i:i + 16], line)
-                time.sleep(speed)
+# Set up signal handling
+signal(SIGTERM, safe_exit)
+signal(SIGHUP, safe_exit)
 
 
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        lcd.clear()
