@@ -34,6 +34,7 @@ class BedExitMonitor:
         self.timer_thread = None
         self.frame_id = None
         self.sensor_url = os.environ["SENSOR_URL"]
+        self.gpio_pin = 4
 
         # Store the SSEClient
         self.sse_client = None
@@ -188,9 +189,6 @@ class BedExitMonitor:
 
 
 if __name__ == '__main__':
-    # service = BedExitMonitor()
-    # service.start()
-    turn_relay_on(4)
-    time.sleep(2)
-    turn_relay_off(4)
+    service = BedExitMonitor()
+    service.start()
 
