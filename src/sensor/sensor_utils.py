@@ -129,8 +129,7 @@ def format_readings(readings):
 
 def check_sensor_connection():
     url = f"{sensor_url}/api/monitor/frames"
-    logger.info("check_sensor_connection: checking...")
-    response = requests.delete(url)
+    response = requests.delete(url, timeout=5)
     if response.status_code == 204:
         logger.info("Sensor Connection: Valid")
         return True
