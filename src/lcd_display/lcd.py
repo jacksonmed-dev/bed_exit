@@ -7,9 +7,6 @@ from signal import signal, SIGTERM, SIGHUP
 lcd = LCD()
 
 
-
-
-# Define the scrolling function with built-in threading
 class ScrollingText:
     def __init__(self, num_lines=2):
         self._num_lines = num_lines
@@ -30,7 +27,7 @@ class ScrollingText:
     def start(self, text, line, speed=0.5):
         line -= 1  # Adjust line index to 0-based
 
-        if self._scroll_threads[line] is not None:
+        if self._scroll_threads[line] is not None and self._scroll_threads[line].is_alive():
             self._stop_event.set()
             self._scroll_threads[line].join()
             self._stop_event.clear()
@@ -47,5 +44,3 @@ def safe_exit(signum, frame):
 # Set up signal handling
 signal(SIGTERM, safe_exit)
 signal(SIGHUP, safe_exit)
-
-
