@@ -178,6 +178,8 @@ class BedExitMonitor:
 
         self.lcd_manager.start("Validating Connections...", line=1)
         time.sleep(2)
+        self.lcd_manager.start(f"Sensor Connection: false", line=1)
+
         is_network_connected = check_internet_connection()
         is_sensor_connected = check_sensor_connection()
 
