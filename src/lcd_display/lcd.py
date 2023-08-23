@@ -17,12 +17,21 @@ class ScrollingText:
     def _scroll_thread(self):
         while not self._stop_event.is_set():
             if self._line1 or self._line2:
-                if self._line1:
-                    lcd.text(self._line1, 1)
-                if self._line2:
-                    lcd.text(self._line2, 2)
-                time.sleep(0.5)  # Sleep to control scroll speed
-                lcd.clear()
+                self._scroll_line(self._line1, 1)
+                self._scroll_line(self._line2, 2)
+
+    def _scroll_line(self, text, line):
+        if not text:
+            return
+
+        text = text + " " * 16
+        text_length = len(text)
+
+        for i in range(text_length - 16 + 1):
+            if self._stop_event.is_set():
+                break
+            lcd.text(text[i:i + 16], line)
+            time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
 
     def set_lines(self, line1, line2):
         self._line1 = line1
