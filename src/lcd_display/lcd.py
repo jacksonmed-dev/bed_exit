@@ -34,21 +34,24 @@ class ScrollingText:
 
     def _scroll_thread(self):
         while not self._stop_event.is_set():
-            self._scroll_line(self._line1, 1)
-            self._scroll_line(self._line2, 2)
+            self._scroll_line(self._line1, self._line2)
 
-    def _scroll_line(self, text, line):
-        if not text:
+    def _scroll_line(self, text1, text2):
+        if not text1 and not text2:
             return
 
-        text = text + " " * 16
-        text_length = len(text)
+        text1 = text1 + " " * 16
+        text2 = text2 + " " * 16
+        text_length = len(text1)
 
         for i in range(text_length - 16 + 1):
             if self._stop_event.is_set():
                 break
-            lcd.text(text[i:i + 16], line)
+            lcd.text(text1[i:i + 16], 1)
+            lcd.text(text2[i:i + 16], 2)
             time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
+
+    # Adjust the sleep duration for scrolling speed
 
     def _restart_thread(self):
         if self._thread is not None:
