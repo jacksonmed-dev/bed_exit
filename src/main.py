@@ -12,7 +12,7 @@ from sensor import get_frames_within_window, format_sensor_data, delete_all_fram
     set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
-from gpio import turn_relay_off, turn_relay_on
+from gpio import turn_relay_off, turn_relay_on, cleanup
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,6 +54,9 @@ class BedExitMonitor:
         
         
     def start(self):
+        # Cleanup GPIP
+        cleanup()
+
         # Start the Bluetooth service in a separate thread
         bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
