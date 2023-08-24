@@ -44,12 +44,23 @@ class ScrollingText:
         text2 = text2 + " " * 16
         text_length = len(text1)
 
-        for i in range(text_length - 16 + 1):
-            if self._stop_event.is_set():
-                break
-            lcd.text(text1[i:i + 16], 1)
-            lcd.text(text2[i:i + 16], 2)
-            time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
+        scroll_line1 = len(text1) > 16
+        scroll_line2 = len(text2) > 16
+
+        if not scroll_line1:
+            lcd.text(text1, 1)
+        if not scroll_line2:
+            lcd.text(text2, 2)
+
+        if scroll_line1 or scroll_line2:
+            for i in range(text_length - 16 + 1):
+                if self._stop_event.is_set():
+                    break
+                if scroll_line1:
+                    lcd.text(text1[i:i + 16], 1)
+                if scroll_line2:
+                    lcd.text(text2[i:i + 16], 2)
+                time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
 
     # Adjust the sleep duration for scrolling speed
 
