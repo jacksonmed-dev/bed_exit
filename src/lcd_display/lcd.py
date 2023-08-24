@@ -86,7 +86,6 @@ class ScrollingText:
                     time.sleep(2)  # Adjust this value as needed
             # Display the remaining characters at the end
             if remaining_chars > 0:
-                time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 lcd.text(text1[-remaining_chars:], 1)
                 lcd.text(text2[-remaining_chars:], 2)
                 time.sleep(2)  # Adjust the sleep duration for scrolling speed
