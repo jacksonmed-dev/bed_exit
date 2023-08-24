@@ -57,9 +57,9 @@ class BedExitMonitor:
         # Cleanup GPIP
         cleanup()
 
-        self.lcd_manager.line1("Hello World")
+        self.lcd_manager.line1 = "Hello World"
         time.sleep(4)
-        self.lcd_manager.line2("2Hello World2")
+        self.lcd_manager.line2 = "2Hello World2"
 
         # Start the Bluetooth service in a separate thread
         bluetooth_service = BluetoothService(callback=self.ble_controller)
