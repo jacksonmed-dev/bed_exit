@@ -9,7 +9,7 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
-    set_rotation_interval, reset_rotation_interval, check_sensor_connection
+    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on
@@ -51,6 +51,20 @@ class BedExitMonitor:
 
 
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
+        
+        
+    def start(self):
+        # Start the Bluetooth service in a separate thread
+        bluetooth_service = BluetoothService(callback=self.ble_controller)
+        self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
+        self.bluetooth_service_thread.start()
+
+        # Start the API Monitor
+        self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+        self.api_monitor_sse_client_thread.start()
+
+        self.monitor_thread = threading.Thread(target=self.status_monitor)
+        self.monitor_thread.start()
 
     def status_monitor(self):
         # self.lcd_manager.set_lines(f"Sensor Connection: {is_sensor_connected}", f"Wifi Connection: {is_network_connected}")
@@ -92,44 +106,12 @@ class BedExitMonitor:
 
             # Example controller function
 
-    def ble_controller(self, parsed_info):
-        input_array = parsed_info.split(',')
-
-        if not input_array:
-            return  # Empty array, nothing to do
-
-        command = input_array[0].lower()
-        if command == 'start':
-            if len(input_array) >= 1:
-                self.api_monitor_sse_client()
-        elif command == 'stop':
-            if len(input_array) >= 1:
-                self.stop_api_monitor_sse_client()
-        elif command == "wifi":
-            if len(input_array) >= 3:
-                network_ssid, network_password = input_array[1:3]
-                logger.info("initializing sensor wifi connection")
-                connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
-                                        wireless_interface="wlan0")
-                is_network_connected = check_internet_connection()
-                is_sensor_connected = check_sensor_connection()
-                if is_network_connected and is_sensor_connected:
-                    self.initialize_default_sensor()
-                    self.api_monitor_sse_client()
-        elif command == "bed_id":
-            if len(input_array) >= 2:
-                bed_id = input_array[1]
-                self.bed_id = bed_id
-                logger.info("setting the bed id: ", self.bed_id)
-                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
-                                                      {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
-
     def api_monitor_sse_client(self):
         if self.sse_client is not None:
             self.stop_api_monitor_sse_client()
 
         logger.info("starting the sse client")
-        self.initialize_default_sensor()
+        initialize_default_sensor()
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
 
@@ -241,26 +223,37 @@ class BedExitMonitor:
         self.timer_thread = threading.Timer(10, self.update_patient_presence)
         self.timer_thread.start()
 
-    def initialize_default_sensor(self):
-        # Initialize the sensor default values
-        logger.info("Initializing Sensor Values")
-        set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
-        set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
-        reset_rotation_interval()
+    def ble_controller(self, parsed_info):
+        input_array = parsed_info.split(',')
 
-    def start(self):
-        # Start the Bluetooth service in a separate thread
-        bluetooth_service = BluetoothService(callback=self.ble_controller)
-        self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
-        self.bluetooth_service_thread.start()
+        if not input_array:
+            return  # Empty array, nothing to do
 
-        # Start the API Monitor
-        self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-        self.api_monitor_sse_client_thread.start()
-
-        self.monitor_thread = threading.Thread(target=self.status_monitor)
-        self.monitor_thread.start()
-
+        command = input_array[0].lower()
+        if command == 'start':
+            if len(input_array) >= 1:
+                self.api_monitor_sse_client()
+        elif command == 'stop':
+            if len(input_array) >= 1:
+                self.stop_api_monitor_sse_client()
+        elif command == "wifi":
+            if len(input_array) >= 3:
+                network_ssid, network_password = input_array[1:3]
+                logger.info("initializing sensor wifi connection")
+                connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
+                                        wireless_interface="wlan0")
+                is_network_connected = check_internet_connection()
+                is_sensor_connected = check_sensor_connection()
+                if is_network_connected and is_sensor_connected:
+                    initialize_default_sensor()
+                    self.api_monitor_sse_client()
+        elif command == "bed_id":
+            if len(input_array) >= 2:
+                bed_id = input_array[1]
+                self.bed_id = bed_id
+                logger.info("setting the bed id: ", self.bed_id)
+                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
+                                                      {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
 
 

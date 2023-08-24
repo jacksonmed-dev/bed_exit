@@ -19,6 +19,14 @@ logger.addHandler(filelogHandler)
 logger.addHandler(logHandler)
 
 
+def initialize_default_sensor():
+    # Initialize the sensor default values
+    logger.info("Initializing Sensor Values")
+    set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
+    set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
+    reset_rotation_interval()
+
+
 def set_frequency(new_frequency):
     url = f"{sensor_url}/api/frequency"
     url2 = f"{sensor_url}/api/monitor/storage/frequency"
