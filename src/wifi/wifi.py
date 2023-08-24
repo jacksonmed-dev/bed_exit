@@ -90,13 +90,11 @@ def disconnect_from_wifi_network(wireless_interface):
 
 
 def check_internet_connection():
-    logger.info("Checking internet connection status")
     try:
         # Run the ping command to Google DNS (8.8.8.8) with a single packet and 1-second timeout
         subprocess.run(["ping", "-c", "3", "-W", "1", "8.8.8.8"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        check=True)
         # If the ping command returns with no errors, the internet connection is valid
-        logger.info("connection status: valid")
         return True
     except subprocess.CalledProcessError:
         # If an error occurs (e.g., timeout or unreachable host), the internet connection is not valid
