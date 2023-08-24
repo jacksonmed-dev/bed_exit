@@ -51,8 +51,13 @@ class ScrollingText:
 
         if not scroll_line1:
             lcd.text(text1, 1)
+        else:
+            lcd.text(" " * 16, 1)  # Clear the line
+
         if not scroll_line2:
             lcd.text(text2, 2)
+        else:
+            lcd.text(" " * 16, 2)  # Clear the line
 
         if scroll_line1 or scroll_line2:
             max_length = max(len(text1), len(text2))
