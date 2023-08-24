@@ -65,6 +65,7 @@ class ScrollingText:
                     break
                 if scroll_line1:
                     chunk1 = text1[chunk_start:chunk_start + 16]
+                    print(chunk1)
                 else:
                     chunk1 = ""
                 if scroll_line2:
