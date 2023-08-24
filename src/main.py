@@ -70,7 +70,7 @@ class BedExitMonitor:
         self.api_monitor_sse_client_thread.start()
         time.sleep(4)
 
-        self.lcd_manager.line1 = ""
+        self.lcd_manager.clear_line(1)
         self.monitor_thread = threading.Thread(target=self.status_monitor)
         self.monitor_thread.start()
 

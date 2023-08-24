@@ -32,6 +32,12 @@ class ScrollingText:
         self._line2 = value
         self._restart_thread()
 
+    def clear_line(self, line_number):
+        if line_number == 1:
+            self.line1 = ""
+        elif line_number == 2:
+            self.line2 = ""
+
     def _scroll_thread(self):
         while not self._stop_event.is_set():
             self._scroll_line(self._line1, self._line2)
