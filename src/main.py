@@ -62,13 +62,13 @@ class BedExitMonitor:
         bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
         self.bluetooth_service_thread.start()
-        time.sleep(10)
+        time.sleep(2)
 
-        self.lcd_manager.line1 = "Initializing Sensor"
+        self.lcd_manager.line2 = "Initializing Sensor"
         # Start the API Monitor
         self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
         self.api_monitor_sse_client_thread.start()
-        time.sleep(4)
+        time.sleep(10)
 
         self.lcd_manager.clear_line(1)
         self.monitor_thread = threading.Thread(target=self.status_monitor)
