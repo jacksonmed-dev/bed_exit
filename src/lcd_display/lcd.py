@@ -37,16 +37,12 @@ class ScrollingText:
             self.line1 = ""
         elif line_number == 2:
             self.line2 = ""
-        self._restart_thread()
 
     def _scroll_thread(self):
         while not self._stop_event.is_set():
             self._scroll_line(self._line1, self._line2)
 
     def _scroll_line(self, text1, text2):
-        if not text1 and not text2:
-            return
-
         scroll_line1 = len(text1) > 16
         scroll_line2 = len(text2) > 16
 
