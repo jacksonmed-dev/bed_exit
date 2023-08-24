@@ -65,14 +65,17 @@ class ScrollingText:
                 if self._stop_event.is_set():
                     break
                 if scroll_line1:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk1 = text1[chunk_start:chunk_start + 16]
                 else:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk1 = ""
                 if scroll_line2:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk2 = text2[chunk_start:chunk_start + 16]
                 else:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk2 = ""
-                time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 lcd.text(chunk1, 1)
                 lcd.text(chunk2, 2)            # Display the remaining characters at the end
             if remaining_chars > 0:
