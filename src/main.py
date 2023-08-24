@@ -83,7 +83,6 @@ class BedExitMonitor:
                 time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
                 if time_since_last_update > 20:
                     logger.error("Sensor Connection lost... Attempting to reconnect")
-                    threading.Thread(target=self.sensor_recovery).start()
                     with self.sensor_recovery_lock:
                         threading.Thread(target=self.sensor_recovery).start()
 
