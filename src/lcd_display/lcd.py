@@ -67,6 +67,7 @@ class ScrollingText:
                     break
                 if scroll_line1:
                     chunk1 = text1[chunk_start:chunk_start + 16]
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 else:
                     chunk1 = ""
                     time.sleep(2)  # Adjust the sleep duration for scrolling speed
