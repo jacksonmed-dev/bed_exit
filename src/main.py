@@ -37,9 +37,7 @@ class BedExitMonitor:
         self.sensor_url = os.environ["SENSOR_URL"]
         self.gpio_pin = 4
 
-        # Store the SSEClient
-
-        # Initialize BluetoothService and Kinesis client here
+        # all threads
         self.bluetooth_service_thread = None
 
         # SSE Client
@@ -50,6 +48,7 @@ class BedExitMonitor:
 
         # Monitor
         self.monitor_thread = None
+
 
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
@@ -252,8 +251,8 @@ class BedExitMonitor:
     def start(self):
         # Start the Bluetooth service in a separate thread
         bluetooth_service = BluetoothService(callback=self.ble_controller)
-        self.bluetooth_thread = threading.Thread(target=bluetooth_service.start)
-        self.bluetooth_thread.start()
+        self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
+        self.bluetooth_service_thread.start()
 
         # Start the API Monitor
         self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
