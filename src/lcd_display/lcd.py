@@ -61,15 +61,18 @@ class ScrollingText:
             num_chunks = (max_length - 16) // 16 + 1
             remaining_chars = max_length % 16  # Number of characters to display at the end
             for chunk_num in range(num_chunks):
+                time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 chunk_start = chunk_num * 16
                 if self._stop_event.is_set():
                     break
                 if scroll_line1:
                     chunk1 = text1[chunk_start:chunk_start + 16]
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 else:
                     chunk1 = ""
                 if scroll_line2:
                     chunk2 = text2[chunk_start:chunk_start + 16]
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 else:
                     chunk2 = ""
                 time.sleep(2)  # Adjust the sleep duration for scrolling speed
