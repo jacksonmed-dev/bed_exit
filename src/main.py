@@ -40,7 +40,7 @@ class BedExitMonitor:
         # all threads
         self.bluetooth_service_thread = None
 
-        self.sensor_recovery_lock = threading.Lock()
+        self.sensor_recovery_in_progress = False
 
         # SSE Client
         self.api_monitor_sse_client_thread = None
@@ -83,7 +83,8 @@ class BedExitMonitor:
                 time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
                 if time_since_last_update > 20:
                     logger.error("Sensor Connection lost... Attempting to reconnect")
-                    with self.sensor_recovery_lock:
+                    if not self.sensor_recovery_in_progress:
+                        self.sensor_recovery_in_progress = True
                         logger.info("Starting sensor recovery thread")
                         threading.Thread(target=self.sensor_recovery).start()
 
@@ -114,6 +115,7 @@ class BedExitMonitor:
                 if is_sensor_connected:
                     break
                 time.sleep(10)
+        self.sensor_recovery_in_progress = False
 
             # Example controller function
 
