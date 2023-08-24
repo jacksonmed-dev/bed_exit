@@ -60,6 +60,7 @@ class ScrollingText:
             max_length = max(len(text1), len(text2))
             num_chunks = (max_length - 16) // 16 + 1
             remaining_chars = max_length % 16  # Number of characters to display at the end
+            time.sleep(1)  # Adjust the sleep duration for scrolling speed
             for chunk_num in range(num_chunks):
                 chunk_start = chunk_num * 16
                 if self._stop_event.is_set():
@@ -73,12 +74,12 @@ class ScrollingText:
                 else:
                     chunk2 = ""
                 lcd.text(chunk1, 1)
-                lcd.text(chunk2, 2)
-                time.sleep(2)  # Adjust the sleep duration for scrolling speed
-            # Display the remaining characters at the end
+                lcd.text(chunk2, 2)            # Display the remaining characters at the end
+                time.sleep(1)  # Adjust the sleep duration for scrolling speed
             if remaining_chars > 0:
                 lcd.text(text1[-remaining_chars:], 1)
                 lcd.text(text2[-remaining_chars:], 2)
+
 
     # Adjust the sleep duration for scrolling speed
 
