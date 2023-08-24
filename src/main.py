@@ -40,6 +40,8 @@ class BedExitMonitor:
         # all threads
         self.bluetooth_service_thread = None
 
+        self.sensor_recovery_lock = threading.Lock()
+
         # SSE Client
         self.api_monitor_sse_client_thread = None
         self.sse_client = None
@@ -48,7 +50,6 @@ class BedExitMonitor:
 
         # Monitor
         self.monitor_thread = None
-
 
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
         
@@ -83,6 +84,8 @@ class BedExitMonitor:
                 if time_since_last_update > 20:
                     logger.error("Sensor Connection lost... Attempting to reconnect")
                     threading.Thread(target=self.sensor_recovery).start()
+                    with self.sensor_recovery_lock:
+                        threading.Thread(target=self.sensor_recovery).start()
 
             # check network connection
             is_network_connected = check_internet_connection()
