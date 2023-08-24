@@ -40,10 +40,6 @@ class ScrollingText:
         if not text1 and not text2:
             return
 
-        text1 = text1 + " " * 16
-        text2 = text2 + " " * 16
-        text_length = len(text1)
-
         scroll_line1 = len(text1) > 16
         scroll_line2 = len(text2) > 16
 
@@ -53,7 +49,8 @@ class ScrollingText:
             lcd.text(text2, 2)
 
         if scroll_line1 or scroll_line2:
-            for i in range(text_length - 16 + 1):
+            max_length = max(len(text1), len(text2))
+            for i in range(max_length - 16 + 1):
                 if self._stop_event.is_set():
                     break
                 if scroll_line1:
