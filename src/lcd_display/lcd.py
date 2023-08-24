@@ -75,10 +75,11 @@ class ScrollingText:
                     chunk2 = ""
                 lcd.text(chunk1, 1)
                 lcd.text(chunk2, 2)            # Display the remaining characters at the end
-                time.sleep(1)  # Adjust the sleep duration for scrolling speed
             if remaining_chars > 0:
                 lcd.text(text1[-remaining_chars:], 1)
                 lcd.text(text2[-remaining_chars:], 2)
+            time.sleep(2)  # Adjust the sleep duration for scrolling speed
+
 
 
     # Adjust the sleep duration for scrolling speed
