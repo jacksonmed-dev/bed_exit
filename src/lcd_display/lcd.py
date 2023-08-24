@@ -58,13 +58,14 @@ class ScrollingText:
 
         if scroll_line1 or scroll_line2:
             max_length = max(len(text1), len(text2))
-            for i in range(max_length - 16 + 1):
+            num_chunks = (max_length - 16) // 16 + 1
+            for chunk_start in range(0, max_length - 16 + 1, 16):
                 if self._stop_event.is_set():
                     break
                 if scroll_line1:
-                    lcd.text(text1[i:i + 16], 1)
+                    lcd.text(text1[chunk_start:chunk_start + 16], 1)
                 if scroll_line2:
-                    lcd.text(text2[i:i + 16], 2)
+                    lcd.text(text2[chunk_start:chunk_start + 16], 2)
                 time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
 
     # Adjust the sleep duration for scrolling speed
