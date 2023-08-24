@@ -69,14 +69,15 @@ class BedExitMonitor:
         # Start the API Monitor
         self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
         self.api_monitor_sse_client_thread.start()
-        time.sleep(10)
+        time.sleep(5)
 
         self.lcd_manager.clear_line(1)
+        self.lcd_manager.clear_line(2)
+
         self.monitor_thread = threading.Thread(target=self.status_monitor)
         self.monitor_thread.start()
 
     def status_monitor(self):
-        # self.lcd_manager.set_lines(f"Sensor Connection: {is_sensor_connected}", f"Wifi Connection: {is_network_connected}")
         while True:
             # check sensor connection
             if self.sse_client_last_updated_at is not None:
@@ -99,12 +100,14 @@ class BedExitMonitor:
     def sensor_recovery(self):
         is_sensor_connected = check_sensor_connection()
         if is_sensor_connected:
+            logger.info("Sensor connection re-restablished")
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
             self.stop_api_monitor_sse_client()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
         else:
             # cycle the sensor.
+            logger.info("Cycling the sensor power")
             turn_relay_on(self.gpio_pin)
             time.sleep(5)
             turn_relay_off(self.gpio_pin)
@@ -112,7 +115,7 @@ class BedExitMonitor:
             for i in range(2):
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
-                    break
+                    logger.info("Sensor connection re-restablished")
                 time.sleep(2)
         self.sensor_recovery_in_progress = False
 
@@ -133,6 +136,7 @@ class BedExitMonitor:
                 time.sleep(1)  # Adjust the interval as needed
 
             # If flag is set, close the SSE client and exit
+            logger.info("closing sse client")
             self.sse_client.close()
             self.sse_client = None
 
