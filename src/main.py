@@ -109,12 +109,11 @@ class BedExitMonitor:
             time.sleep(5)
             turn_relay_off(self.gpio_pin)
             # Wait for sensor to connect
-            is_sensor_connected = check_sensor_connection()
-            for i in range(50):
+            for i in range(2):
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
                     break
-                time.sleep(10)
+                time.sleep(2)
         self.sensor_recovery_in_progress = False
 
             # Example controller function
