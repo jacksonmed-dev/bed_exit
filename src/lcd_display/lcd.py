@@ -69,11 +69,13 @@ class ScrollingText:
                     chunk1 = text1[chunk_start:chunk_start + 16]
                     time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 else:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk1 = ""
                 if scroll_line2:
                     chunk2 = text2[chunk_start:chunk_start + 16]
                     time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 else:
+                    time.sleep(2)  # Adjust the sleep duration for scrolling speed
                     chunk2 = ""
                 time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 lcd.text(chunk1, 1)
@@ -84,9 +86,10 @@ class ScrollingText:
                     time.sleep(2)  # Adjust this value as needed
             # Display the remaining characters at the end
             if remaining_chars > 0:
+                time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 lcd.text(text1[-remaining_chars:], 1)
                 lcd.text(text2[-remaining_chars:], 2)
-
+                time.sleep(2)  # Adjust the sleep duration for scrolling speed
     # Adjust the sleep duration for scrolling speed
 
     def _restart_thread(self):
