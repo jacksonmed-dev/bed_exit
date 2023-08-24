@@ -72,7 +72,7 @@ class ScrollingText:
                     lcd.text(text2[chunk_start:chunk_start + 16], 2)
                 else:
                     lcd.text(" " * 16, 2)  # Clear the line
-                time.sleep(0.1)  # Adjust the sleep duration for scrolling speed
+                time.sleep(2)  # Adjust the sleep duration for scrolling speed
             # Display the remaining characters without scrolling
             if remaining_chars > 0:
                 if scroll_line1:
