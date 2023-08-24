@@ -72,6 +72,7 @@ class ScrollingText:
                     chunk2 = text2[chunk_start:chunk_start + 16]
                 else:
                     chunk2 = ""
+                time.sleep(2)  # Adjust the sleep duration for scrolling speed
                 lcd.text(chunk1, 1)
                 lcd.text(chunk2, 2)
                 time.sleep(2)  # Adjust the sleep duration for scrolling speed
