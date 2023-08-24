@@ -65,8 +65,12 @@ class ScrollingText:
                     break
                 if scroll_line1:
                     lcd.text(text1[chunk_start:chunk_start + 16], 1)
+                else:
+                    lcd.text(" " * 16, 1)  # Clear the line
                 if scroll_line2:
                     lcd.text(text2[chunk_start:chunk_start + 16], 2)
+                else:
+                    lcd.text(" " * 16, 2)  # Clear the line
                 time.sleep(1)  # Adjust the sleep duration for scrolling speed
 
     # Adjust the sleep duration for scrolling speed
