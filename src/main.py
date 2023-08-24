@@ -56,20 +56,21 @@ class BedExitMonitor:
     def start(self):
         # Cleanup GPIP
         cleanup()
-
-        self.lcd_manager.line1 = "Hello World"
-        time.sleep(4)
-        self.lcd_manager.line2 = "2Hello World2"
+        self.lcd_manager.line1 = "Initializing Bluetooth"
 
         # Start the Bluetooth service in a separate thread
         bluetooth_service = BluetoothService(callback=self.ble_controller)
         self.bluetooth_service_thread = threading.Thread(target=bluetooth_service.start)
         self.bluetooth_service_thread.start()
+        time.sleep(1)
 
+        self.lcd_manager.line1 = "Initializing Sensor"
         # Start the API Monitor
         self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
         self.api_monitor_sse_client_thread.start()
+        time.sleep(1)
 
+        self.lcd_manager.line1 = ""
         self.monitor_thread = threading.Thread(target=self.status_monitor)
         self.monitor_thread.start()
 
