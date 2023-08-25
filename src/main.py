@@ -144,6 +144,7 @@ class BedExitMonitor:
         stopping_flag_timer.start()
 
         try:
+            logger.info("Running the sse client")
             for response in self.sse_client:
                 self.sse_client_last_updated_at = datetime.now()
                 data = response.data.strip()
