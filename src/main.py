@@ -56,6 +56,9 @@ class BedExitMonitor:
         
     def start(self):
         # Cleanup GPIP
+
+        self.kinesis_client.write_cloudwatch_log("HELLO WORLD")
+
         cleanup()
         self.lcd_manager.line1 = "Initializing Bluetooth"
 
@@ -277,3 +280,4 @@ class BedExitMonitor:
 if __name__ == '__main__':
     service = BedExitMonitor()
     service.start()
+

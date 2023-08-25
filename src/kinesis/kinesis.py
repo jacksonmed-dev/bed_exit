@@ -1,5 +1,7 @@
 import logging
 import os
+import time
+
 import boto3
 import json
 
@@ -28,6 +30,7 @@ class KinesisClient:
             aws_secret_access_key=os.environ["ACCESS_KEY_SECRET"],
         )
         self.kinesis_client = self.get_auth_client("kinesis")
+        self.cloudwatchlogs_client = self.get_auth_client("logs")
 
     def signed_request_v2(self, endpoint, dataObj, method='POST'):
         sigv4 = SigV4Auth(self.session.get_credentials(), "execute-api", "us-west-2")
@@ -109,4 +112,20 @@ class KinesisClient:
 
         logger.info(f"Wrote all records successfully")
         logger.info("############ END KINESIS ###########")
+
+
+    def write_cloudwatch_log(self, message):
+        now_ns = time.time_ns()
+        now_ms = int(now_ns / 1000000)
+
+        self.cloudwatchlogs_client.put_log_events(
+            logGroupName="beta-staging-sensor-log-group",
+            logStreamName="beta-staging-sensor-log-stream",
+            logEvents=[
+                {
+                    "timestamp": now_ms,
+                    "message": message,
+                },
+            ],
+        )
 
