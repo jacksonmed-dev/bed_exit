@@ -52,8 +52,7 @@ class BedExitMonitor:
         self.monitor_thread = None
 
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
-        
-        
+
     def start(self):
         # Cleanup GPIP
 
@@ -72,7 +71,7 @@ class BedExitMonitor:
         # Start the API Monitor
         self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
         self.api_monitor_sse_client_thread.start()
-        time.sleep(5)
+        time.sleep(2)
 
         self.lcd_manager.clear_line(1)
         self.lcd_manager.clear_line(2)
@@ -103,11 +102,12 @@ class BedExitMonitor:
     def sensor_recovery(self):
         is_sensor_connected = check_sensor_connection()
         if is_sensor_connected:
-            logger.info("Sensor connection re-restablished")
+            logger.info("Sensor connection re-established")
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
             self.stop_api_monitor_sse_client()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
+            logger.info("api_monitor_sse_client_thread: non blocking")
         else:
             # cycle the sensor.
             logger.info("Cycling the sensor power")
@@ -115,14 +115,12 @@ class BedExitMonitor:
             time.sleep(5)
             turn_relay_off(self.gpio_pin)
             # Wait for sensor to connect
-            for i in range(2):
+            for i in range(5):
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
-                    logger.info("Sensor connection re-restablished")
+                    logger.info("Sensor connection re-established")
                 time.sleep(2)
         self.sensor_recovery_in_progress = False
-
-            # Example controller function
 
     def api_monitor_sse_client(self):
         if self.sse_client is not None:
@@ -276,8 +274,6 @@ class BedExitMonitor:
                                                       {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
 
-
 if __name__ == '__main__':
     service = BedExitMonitor()
     service.start()
-
