@@ -68,16 +68,23 @@ class BedExitMonitor:
         time.sleep(2)
 
         self.lcd_manager.line2 = "Initializing Sensor"
-        # Start the API Monitor
-        self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-        self.api_monitor_sse_client_thread.start()
-        time.sleep(2)
 
-        self.lcd_manager.line1 = "Sensor: Connected"
-        self.lcd_manager.line2 = "WiFi: Connected"
+        network_connection = check_internet_connection()
 
-        self.monitor_thread = threading.Thread(target=self.status_monitor)
-        self.monitor_thread.start()
+        if network_connection:
+            # Start the API Monitor
+            self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+            self.api_monitor_sse_client_thread.start()
+            time.sleep(2)
+
+            self.lcd_manager.line1 = "Sensor: Connected"
+            self.lcd_manager.line2 = "WiFi: Connected"
+
+            self.monitor_thread = threading.Thread(target=self.status_monitor)
+            self.monitor_thread.start()
+        else:
+            self.lcd_manager.line1 = "Connect Wifi In App"
+            self.lcd_manager.line2 = "WiFi: Not Connected"
 
     def status_monitor(self):
         while True:
@@ -266,10 +273,17 @@ class BedExitMonitor:
                 connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
                                         wireless_interface="wlan0")
                 is_network_connected = check_internet_connection()
-                is_sensor_connected = check_sensor_connection()
-                if is_network_connected and is_sensor_connected:
-                    initialize_default_sensor()
-                    self.api_monitor_sse_client()
+                # is_sensor_connected = check_sensor_connection()
+                if is_network_connected:
+                    self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+                    self.api_monitor_sse_client_thread.start()
+                    time.sleep(2)
+
+                    self.lcd_manager.line1 = "Sensor: Connected"
+                    self.lcd_manager.line2 = "WiFi: Connected"
+
+                    self.monitor_thread = threading.Thread(target=self.status_monitor)
+                    self.monitor_thread.start()
         elif command == "bed_id":
             if len(input_array) >= 2:
                 bed_id = input_array[1]
