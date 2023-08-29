@@ -216,7 +216,7 @@ class BedExitMonitor:
             logger.info("--- PATIENT EXIT DETECTED ---")
             logger.info("---- SENDING EXIT EVENT -----")
             self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedExit", "sensorId": "s1"})
+                                                  {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
             self.run_update_patient_presence()
             frames = get_frames_within_window(self.frame_id)
             formatted_data = format_sensor_data(frames, self.is_present, frequency=int(os.environ["SENSOR_FREQUENCY"]))
@@ -225,7 +225,7 @@ class BedExitMonitor:
         if not self.is_present and self.is_sensor_present and not self.is_timer_enabled:
             logger.info("--- PATIENT ENTRY DETECTED ---")
             self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedEntry", "sensorId": "s1"})
+                                                  {"eventType": "bedEntry", "sensorId": os.environ["SENSOR_SSID"]})
             self.run_update_patient_presence()
 
         if not self.is_timer_enabled:
@@ -267,7 +267,7 @@ class BedExitMonitor:
             if len(input_array) >= 1:
                 self.stop_api_monitor_sse_client()
         elif command == "wifi":
-            if len(input_array) >= 3:
+            if len(input_array) >= 4:
                 network_ssid, network_password = input_array[1:3]
                 logger.info("initializing sensor wifi connection")
                 connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
@@ -275,6 +275,8 @@ class BedExitMonitor:
                 is_network_connected = check_internet_connection()
                 # is_sensor_connected = check_sensor_connection()
                 if is_network_connected:
+                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
+                                                          {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
                     self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
                     self.api_monitor_sse_client_thread.start()
                     time.sleep(2)
