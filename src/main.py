@@ -56,8 +56,6 @@ class BedExitMonitor:
     def start(self):
         # Cleanup GPIP
 
-        # self.kinesis_client.write_cloudwatch_log("HELLO WORLD")
-
         cleanup()
         self.lcd_manager.line1 = "Initializing Bluetooth"
 
@@ -77,6 +75,7 @@ class BedExitMonitor:
             self.api_monitor_sse_client_thread.start()
             time.sleep(2)
 
+            self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
             self.lcd_manager.line1 = "Sensor: Connected"
             self.lcd_manager.line2 = "WiFi: Connected"
 
@@ -95,6 +94,7 @@ class BedExitMonitor:
                     if not self.sensor_recovery_in_progress:
                         self.sensor_recovery_in_progress = True
                         logger.info("Starting sensor recovery thread")
+                        self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} lost connection. Starting recovery thread")
                         threading.Thread(target=self.sensor_recovery).start()
 
             # check network connection
@@ -111,6 +111,8 @@ class BedExitMonitor:
         is_sensor_connected = check_sensor_connection()
         if is_sensor_connected:
             logger.info("Sensor connection re-established")
+            self.kinesis_client.write_cloudwatch_log(
+                f"Sensor {os.environ['SENSOR_SSID']} connection reestablished")
             self.lcd_manager.line1 = "Sensor: Connected"
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
             self.sse_client_last_updated_at = datetime.now()
@@ -122,6 +124,8 @@ class BedExitMonitor:
         else:
             # cycle the sensor.
             logger.info("Cycling the sensor power")
+            self.kinesis_client.write_cloudwatch_log(
+                f"Sensor {os.environ['SENSOR_SSID']}: Cycling sensor power")
             turn_relay_on(self.gpio_pin)
             time.sleep(5)
             turn_relay_off(self.gpio_pin)
@@ -130,6 +134,8 @@ class BedExitMonitor:
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
                     logger.info("Sensor connection re-established")
+                    self.kinesis_client.write_cloudwatch_log(
+                        f"Sensor {os.environ['SENSOR_SSID']} connection reestablished")
                     self.lcd_manager.line1 = "Sensor: Connected"
                     self.sse_client_last_updated_at = datetime.now()
                     logger.info("Stopping sse thread")
@@ -138,19 +144,18 @@ class BedExitMonitor:
                     self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
                     self.api_monitor_sse_client_thread.start()
                     self.sensor_recovery_in_progress = False
-                    logger.info("api_monitor_sse_client_thread: non blocking")
                     break
                 time.sleep(2)
 
     def api_monitor_sse_client(self):
         logger.info("starting the sse client")
+        self.kinesis_client.write_cloudwatch_log(
+            f"Sensor {os.environ['SENSOR_SSID']}: Starting sse client")
         initialize_default_sensor()
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
 
         try:
-            logger.info("Running the sse client")
-
             # Timer to periodically check the stopping flag
             def check_stopping_flag():
                 while not self.api_monitor_sse_client_thread_stop_flag:
@@ -158,6 +163,8 @@ class BedExitMonitor:
 
                 # If flag is set, close the SSE client and exit
                 logger.info("closing sse client")
+                self.kinesis_client.write_cloudwatch_log(
+                    f"Sensor {os.environ['SENSOR_SSID']}: Closing sse client")
                 raise Exception("Closing the sse client")
 
             self.api_monitor_sse_client_thread_stop_flag = False
@@ -170,7 +177,6 @@ class BedExitMonitor:
                     return
                 self.sse_client_last_updated_at = datetime.now()
                 data = response.data.strip()
-                logger.info(f"Event Received: {response.event}")
                 if response.event == "attended":
                     self.handle_attended_event(data)
                 if response.event == 'body':
@@ -198,6 +204,8 @@ class BedExitMonitor:
             logger.info(data)
             if not is_ok:
                 logger.info("Calling backend")
+                self.kinesis_client.write_cloudwatch_log(
+                    f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                                       {"eventType": "turnTimerExpire", "sensorId": os.environ["SENSOR_SSID"]})
                 reset_rotation_interval()
@@ -215,6 +223,8 @@ class BedExitMonitor:
         if self.is_present and not self.is_sensor_present and not self.is_timer_enabled:
             logger.info("--- PATIENT EXIT DETECTED ---")
             logger.info("---- SENDING EXIT EVENT -----")
+            self.kinesis_client.write_cloudwatch_log(
+                f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
             self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                                   {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
             self.run_update_patient_presence()
@@ -237,6 +247,8 @@ class BedExitMonitor:
 
     def handle_storage_event(self, data):
         logger.info("############## STORAGE EVENT ###############")
+        self.kinesis_client.write_cloudwatch_log(
+            f"Sensor {os.environ['SENSOR_SSID']}: Sensor Storage Full. Deleting to make space for new frames")
         storage_field = json.loads(data)['used']
         logger.info(f"Storage Used: {storage_field}%")
         if storage_field > 85:

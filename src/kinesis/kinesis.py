@@ -109,7 +109,8 @@ class KinesisClient:
             StreamName=os.environ["STREAM_NAME"],
             # StreamARN=os.environ["STREAM_ARN"]
         )
-
+        self.write_cloudwatch_log(
+            f"Sensor {os.environ['SENSOR_SSID']}: Data successfully sent to kinesis")
         logger.info(f"Wrote all records successfully")
         logger.info("############ END KINESIS ###########")
 
