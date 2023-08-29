@@ -288,7 +288,7 @@ class BedExitMonitor:
             if len(input_array) >= 2:
                 bed_id = input_array[1]
                 self.bed_id = bed_id
-                logger.info("setting the bed id: ", self.bed_id)
+                logger.info(f"setting the bed id: {self.bed_id}")
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
                                                       {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
 
