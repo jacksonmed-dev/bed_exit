@@ -48,7 +48,7 @@ network={{
     psk="{network_password}"
 }}
 """
-    logger.info("Writing the following configuration:\n", config_text)
+    logger.info(f"Writing the following configuration: {config_text}")
     logger.info("Writing new wpa_supplicant file")
     # Write the configuration file to disk
     with open(f"/etc/wpa_supplicant/wpa_supplicant-{wireless_interface}.conf", "w") as f:
