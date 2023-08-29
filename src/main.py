@@ -148,7 +148,6 @@ class BedExitMonitor:
 
             # If flag is set, close the SSE client and exit
             logger.info("closing sse client")
-            self.sse_client = None
 
         self.api_monitor_sse_client_thread_stop_flag = False
         stopping_flag_timer = threading.Thread(target=check_stopping_flag)
