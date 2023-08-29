@@ -119,7 +119,7 @@ class BedExitMonitor:
             time.sleep(5)
             turn_relay_off(self.gpio_pin)
             # Wait for sensor to connect
-            for i in range(5):
+            for i in range(10):
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
                     logger.info("Sensor connection re-established")
