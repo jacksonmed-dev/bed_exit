@@ -157,6 +157,9 @@ class BedExitMonitor:
         try:
             logger.info("Running the sse client")
             for response in self.sse_client:
+
+                if self.api_monitor_sse_client_thread_stop_flag:
+                    return
                 self.sse_client_last_updated_at = datetime.now()
                 data = response.data.strip()
                 logger.info(f"Event Received: {response.event}")
@@ -171,11 +174,11 @@ class BedExitMonitor:
 
         except Exception as e:
             print("Exception in SSEClient loop:", e)
+            return
 
         finally:
             # Clean up and exit the thread
             stopping_flag_timer.join()  # Wait for the flag checking thread to finish
-            self.sse_client = None
 
     def stop_api_monitor_sse_client(self):
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
