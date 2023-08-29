@@ -86,6 +86,7 @@ class BedExitMonitor:
             self.lcd_manager.line2 = "WiFi: Not Connected"
 
     def status_monitor(self):
+        i = 0
         while True:
             # check sensor connection
             if self.sse_client_last_updated_at is not None:
@@ -105,6 +106,11 @@ class BedExitMonitor:
 
             # check bluetooth status
             time.sleep(1)
+            i = i + 1
+            if i % 10 == 0:
+                i = 0  # Reset i to 0, not 1
+                self.kinesis_client.write_cloudwatch_log(
+                    f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
 
     def sensor_recovery(self):
         self.lcd_manager.line1 = "Recovering Sensor Connection"
