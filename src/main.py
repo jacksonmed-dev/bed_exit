@@ -121,7 +121,9 @@ class BedExitMonitor:
                 if is_sensor_connected:
                     logger.info("Sensor connection re-established")
                     self.sse_client_last_updated_at = datetime.now()
+                    logger.info("Stopping sse thread")
                     self.stop_api_monitor_sse_client()
+                    logger.info("Starting new sse thread")
                     self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
                     self.api_monitor_sse_client_thread.start()
                     self.sensor_recovery_in_progress = False
