@@ -119,8 +119,8 @@ class KinesisClient:
         now_ms = int(now_ns / 1000000)
 
         self.cloudwatchlogs_client.put_log_events(
-            logGroupName="beta-staging-client-log-group",
-            logStreamName="beta-staging-client-log-stream",
+            logGroupName="heritage-oaks-prod-sensor-log-group",
+            logStreamName="heritage-oaks-prod-sensor-log-stream",
             logEvents=[
                 {
                     "timestamp": now_ms,
