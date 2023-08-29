@@ -182,6 +182,7 @@ class BedExitMonitor:
             logger.info("api_monitor_sse_client_thread_stop_flag: True")
             self.api_monitor_sse_client_thread_stop_flag = True
             self.api_monitor_sse_client_thread.join()
+            logger.info("joined")
 
         self.api_monitor_sse_client_thread = None
 
