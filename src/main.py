@@ -85,7 +85,6 @@ class BedExitMonitor:
             if self.sse_client_last_updated_at is not None:
                 time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
                 if time_since_last_update > 20:
-                    logger.error("Sensor Connection lost... Attempting to reconnect")
                     if not self.sensor_recovery_in_progress:
                         self.sensor_recovery_in_progress = True
                         logger.info("Starting sensor recovery thread")
@@ -108,6 +107,7 @@ class BedExitMonitor:
             self.stop_api_monitor_sse_client()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
+            self.sensor_recovery_in_progress = False
             logger.info("api_monitor_sse_client_thread: non blocking")
         else:
             # cycle the sensor.
@@ -124,15 +124,12 @@ class BedExitMonitor:
                     self.stop_api_monitor_sse_client()
                     self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
                     self.api_monitor_sse_client_thread.start()
+                    self.sensor_recovery_in_progress = False
                     logger.info("api_monitor_sse_client_thread: non blocking")
                     break
                 time.sleep(2)
-        self.sensor_recovery_in_progress = False
 
     def api_monitor_sse_client(self):
-        if self.sse_client is not None:
-            self.stop_api_monitor_sse_client()
-
         logger.info("starting the sse client")
         initialize_default_sensor()
         url = f"{self.sensor_url}/api/monitor/sse"
@@ -175,10 +172,6 @@ class BedExitMonitor:
             self.sse_client = None
 
     def stop_api_monitor_sse_client(self):
-        if self.sse_client is not None:
-            logger.info("Closing the sensor SSE client")
-            self.sse_client = None
-
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
             logger.info("api_monitor_sse_client_thread_stop_flag: True")
             self.api_monitor_sse_client_thread_stop_flag = True
