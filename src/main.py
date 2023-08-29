@@ -167,7 +167,6 @@ class BedExitMonitor:
         finally:
             # Clean up and exit the thread
             stopping_flag_timer.join()  # Wait for the flag checking thread to finish
-            self.sse_client.close()
             self.sse_client = None
 
     def stop_api_monitor_sse_client(self):
