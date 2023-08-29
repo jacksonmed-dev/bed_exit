@@ -73,8 +73,8 @@ class BedExitMonitor:
         self.api_monitor_sse_client_thread.start()
         time.sleep(2)
 
-        self.lcd_manager.clear_line(1)
-        self.lcd_manager.clear_line(2)
+        self.lcd_manager.line1 = "Sensor: Connected"
+        self.lcd_manager.line2 = "WiFi: Connected"
 
         self.monitor_thread = threading.Thread(target=self.status_monitor)
         self.monitor_thread.start()
@@ -93,15 +93,18 @@ class BedExitMonitor:
             # check network connection
             is_network_connected = check_internet_connection()
             if not is_network_connected:
+                self.lcd_manager.line2 = "WiFi: Failed"
                 logger.error("Wifi Connection lost... Attempting to reconnect")
 
             # check bluetooth status
             time.sleep(1)
 
     def sensor_recovery(self):
+        self.lcd_manager.line1 = "Recovering Sensor Connection"
         is_sensor_connected = check_sensor_connection()
         if is_sensor_connected:
             logger.info("Sensor connection re-established")
+            self.lcd_manager.line1 = "Sensor: Connected"
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
             self.sse_client_last_updated_at = datetime.now()
             self.stop_api_monitor_sse_client()
@@ -120,6 +123,7 @@ class BedExitMonitor:
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
                     logger.info("Sensor connection re-established")
+                    self.lcd_manager.line1 = "Sensor: Connected"
                     self.sse_client_last_updated_at = datetime.now()
                     logger.info("Stopping sse thread")
                     self.stop_api_monitor_sse_client()
