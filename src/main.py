@@ -147,6 +147,7 @@ class BedExitMonitor:
             logger.info("closing sse client")
             self.sse_client = None
 
+        self.api_monitor_sse_client_thread_stop_flag = False
         stopping_flag_timer = threading.Thread(target=check_stopping_flag)
         stopping_flag_timer.start()
 
@@ -179,6 +180,7 @@ class BedExitMonitor:
             self.sse_client = None
 
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
+            logger.info("api_monitor_sse_client_thread_stop_flag: True")
             self.api_monitor_sse_client_thread_stop_flag = True
             self.api_monitor_sse_client_thread.join()
 
