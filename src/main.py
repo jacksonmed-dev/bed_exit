@@ -104,6 +104,7 @@ class BedExitMonitor:
         if is_sensor_connected:
             logger.info("Sensor connection re-established")
             # This means the sse client stopped working. But the connection still exists. Restart the sse client
+            self.sse_client_last_updated_at = datetime.now()
             self.stop_api_monitor_sse_client()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
@@ -119,6 +120,8 @@ class BedExitMonitor:
                 is_sensor_connected = check_sensor_connection()
                 if is_sensor_connected:
                     logger.info("Sensor connection re-established")
+                    self.sse_client_last_updated_at = datetime.now()
+                    break
                 time.sleep(2)
         self.sensor_recovery_in_progress = False
 
@@ -171,7 +174,6 @@ class BedExitMonitor:
     def stop_api_monitor_sse_client(self):
         if self.sse_client is not None:
             logger.info("Closing the sensor SSE client")
-            self.sse_client.close()
             self.sse_client = None
 
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
