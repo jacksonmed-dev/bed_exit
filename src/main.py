@@ -109,6 +109,7 @@ class BedExitMonitor:
             i = i + 1
             if i % 10 == 0:
                 i = 0  # Reset i to 0, not 1
+                logger.info("Health Check Passed")
                 self.kinesis_client.write_cloudwatch_log(
                     f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
 
