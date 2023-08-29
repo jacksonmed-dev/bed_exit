@@ -141,23 +141,25 @@ class BedExitMonitor:
         url = f"{self.sensor_url}/api/monitor/sse"
         self.sse_client = SSEClient(url)
 
-        # Timer to periodically check the stopping flag
-        def check_stopping_flag():
-            while not self.api_monitor_sse_client_thread_stop_flag:
-                time.sleep(1)  # Adjust the interval as needed
-
-            # If flag is set, close the SSE client and exit
-            logger.info("closing sse client")
-
-        self.api_monitor_sse_client_thread_stop_flag = False
-        stopping_flag_timer = threading.Thread(target=check_stopping_flag)
-        stopping_flag_timer.start()
-
         try:
             logger.info("Running the sse client")
-            for response in self.sse_client:
 
+            # Timer to periodically check the stopping flag
+            def check_stopping_flag():
+                while not self.api_monitor_sse_client_thread_stop_flag:
+                    time.sleep(1)  # Adjust the interval as needed
+
+                # If flag is set, close the SSE client and exit
+                logger.info("closing sse client")
+                raise Exception("Closing the sse client")
+
+            self.api_monitor_sse_client_thread_stop_flag = False
+            stopping_flag_timer = threading.Thread(target=check_stopping_flag)
+            stopping_flag_timer.start()
+
+            for response in self.sse_client:
                 if self.api_monitor_sse_client_thread_stop_flag:
+                    logger.info("closing sse client")
                     return
                 self.sse_client_last_updated_at = datetime.now()
                 data = response.data.strip()
@@ -174,10 +176,6 @@ class BedExitMonitor:
         except Exception as e:
             print("Exception in SSEClient loop:", e)
             return
-
-        finally:
-            # Clean up and exit the thread
-            stopping_flag_timer.join()  # Wait for the flag checking thread to finish
 
     def stop_api_monitor_sse_client(self):
         if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
