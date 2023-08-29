@@ -275,14 +275,13 @@ class BedExitMonitor:
                 is_network_connected = check_internet_connection()
                 # is_sensor_connected = check_sensor_connection()
                 if is_network_connected:
+                    self.lcd_manager.line1 = "Sensor: Connected"
+                    self.lcd_manager.line2 = "WiFi: Connected"
                     self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
                                                           {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
                     self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
                     self.api_monitor_sse_client_thread.start()
                     time.sleep(2)
-
-                    self.lcd_manager.line1 = "Sensor: Connected"
-                    self.lcd_manager.line2 = "WiFi: Connected"
 
                     self.monitor_thread = threading.Thread(target=self.status_monitor)
                     self.monitor_thread.start()
