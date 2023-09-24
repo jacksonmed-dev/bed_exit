@@ -35,7 +35,7 @@ class KinesisClient:
     def signed_request_v2(self, endpoint, dataObj, method='POST'):
         sigv4 = SigV4Auth(self.session.get_credentials(), "execute-api", "us-west-2")
         data = json.dumps(dataObj)
-        headers = {"Content-Type": "application/x-amz-json-1.1"}
+        headers = {"Content-Type": "application/x-amz-json-1.1", "x-api-key": os.environ["API_KEY"]}
         request = AWSRequest(
             method=method,
             url=endpoint,
