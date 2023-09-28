@@ -24,7 +24,7 @@ def initialize_default_sensor():
     logger.info("Initializing Sensor Values")
     set_frequency(int(os.environ["SENSOR_FREQUENCY"]))
     set_rotation_interval(int(os.environ["SENSOR_ROTATION"]))
-    reset_rotation_interval()
+    # reset_rotation_interval()
 
 
 def set_frequency(new_frequency):

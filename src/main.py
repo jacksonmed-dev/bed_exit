@@ -71,6 +71,8 @@ class BedExitMonitor:
 
         if network_connection:
             # Start the API Monitor
+            # Set the turn timer to default value
+            reset_rotation_interval()
             self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             self.api_monitor_sse_client_thread.start()
             time.sleep(2)
@@ -207,10 +209,11 @@ class BedExitMonitor:
 
     def handle_attended_event(self, data):
         is_ok = json.loads(data)['ok']
+        countdown = json.loads(data)['countdown']
         if self.is_present:
             logger.info(data)
-            if not is_ok:
-                logger.info("Calling backend")
+            if not is_ok and countdown == 0:
+                logger.info("--- TURN TIMER EXPIRED ---")
                 self.kinesis_client.write_cloudwatch_log(
                     f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
