@@ -120,8 +120,8 @@ class KinesisClient:
         now_ms = int(now_ns / 1000000)
 
         self.cloudwatchlogs_client.put_log_events(
-            logGroupName="heritage-oaks-prod-sensor-log-group",
-            logStreamName="heritage-oaks-prod-sensor-log-stream",
+            logGroupName=os.environ["AWS_LOG_GROUP"],
+            logStreamName=os.environ["AWS_LOG_STREAM"],
             logEvents=[
                 {
                     "timestamp": now_ms,
