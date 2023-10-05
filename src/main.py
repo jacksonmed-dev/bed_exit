@@ -127,10 +127,19 @@ class BedExitMonitor:
             if monitor:
                 storage = monitor['storage']['used']
                 is_present = monitor['body']['present']
-                attended = monitor['attended']['countdown']
+                countdown = monitor['attended']['countdown']
 
-                if storage > 80:
-                    delete_all_frames()
+                if countdown < 0:
+                    if self.is_present:
+                        logger.info("--- TURN TIMER EXPIRED ---")
+                        self.kinesis_client.write_cloudwatch_log(
+                            f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
+                        self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                              {"eventType": "turnTimerExpire",
+                                                               "sensorId": os.environ["SENSOR_SSID"]})
+                        reset_rotation_interval()
+                    else:
+                        reset_rotation_interval()
 
                 if self.is_present and not is_present:
                     self.is_present = is_present
@@ -147,6 +156,9 @@ class BedExitMonitor:
                     self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                                           {"eventType": "bedEntry",
                                                            "sensorId": os.environ["SENSOR_SSID"]})
+
+                if storage > 80:
+                    delete_all_frames()
 
             logger.info(f"monitor: {monitor}")
 
