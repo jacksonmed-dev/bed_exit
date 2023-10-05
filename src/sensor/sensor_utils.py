@@ -214,7 +214,7 @@ def get_current_frame():
 def get_monitor():
     url = f"{sensor_url}/api/monitor"
     try:
-        response = requests.get(url, timeout=10)  # Set a timeout value (e.g., 5 seconds)
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
         data = json.loads(response.text)
         return data
     except Exception as e:

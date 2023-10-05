@@ -138,7 +138,7 @@ class BedExitMonitor:
             #     self.kinesis_client.write_cloudwatch_log(
             #         f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
 
-            time.sleep(2)
+            time.sleep(5)
             i = i + 1
             if i % 10 == 0:
                 i = 0  # Reset i to 0, not 1
