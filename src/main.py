@@ -73,7 +73,8 @@ class BedExitMonitor:
             # Start the API Monitor
             # Set the turn timer to default value
             reset_rotation_interval()
-            set_default_filters()
+            # set_default_filters()
+            delete_all_frames()
             # self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
             # self.api_monitor_sse_client_thread.start()
             # time.sleep(2)
