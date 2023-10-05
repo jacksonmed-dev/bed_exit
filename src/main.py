@@ -9,7 +9,8 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
-    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor, set_default_filters, get_attended, get_body, get_current_frame, get_storage, get_monitor
+    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor, \
+    set_default_filters, get_attended, get_body, get_current_frame, get_storage, get_monitor
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
@@ -122,24 +123,39 @@ class BedExitMonitor:
         while True:
             # is_sensor_connected = check_sensor_connection()
             # logger.info(f"is_sensor_connected: {is_sensor_connected}")
-            attended = get_monitor()
-            # body = get_body()
-            # current_frame = get_current_frame()
-            # storage = get_storage()
+            monitor = get_monitor()
+            if monitor:
+                storage = monitor['storage']['used']
+                is_present = monitor['body']['present']
+                attended = monitor['attended']['countdown']
 
-            logger.info(f"monitor: {attended}")
-            # logger.info(f"body: {body}")
-            # logger.info(f"current_frame: {current_frame}")
-            # logger.info(f"storage: {storage}")
-            # if is_sensor_connected:
+                if storage > 80:
+                    delete_all_frames()
 
+                if self.is_present and not is_present:
+                    self.is_present = is_present
+                    logger.info("--- PATIENT EXIT DETECTED ---")
+                    logger.info("---- SENDING EXIT EVENT -----")
+                    self.kinesis_client.write_cloudwatch_log(
+                        f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
+                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                          {"eventType": "bedExit",
+                                                           "sensorId": os.environ["SENSOR_SSID"]})
+                elif not self.is_present and is_present:
+                    self.is_present = is_present
+                    logger.info("--- PATIENT ENTRY DETECTED ---")
+                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                          {"eventType": "bedEntry",
+                                                           "sensorId": os.environ["SENSOR_SSID"]})
+
+            logger.info(f"monitor: {monitor}")
 
             # else:
             #     logger.error(f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
             #     self.kinesis_client.write_cloudwatch_log(
             #         f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
 
-            time.sleep(5)
+            time.sleep(1)
             i = i + 1
             if i % 10 == 0:
                 i = 0  # Reset i to 0, not 1
@@ -249,7 +265,8 @@ class BedExitMonitor:
                 self.kinesis_client.write_cloudwatch_log(
                     f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                      {"eventType": "turnTimerExpire", "sensorId": os.environ["SENSOR_SSID"]})
+                                                      {"eventType": "turnTimerExpire",
+                                                       "sensorId": os.environ["SENSOR_SSID"]})
                 reset_rotation_interval()
         else:
             reset_rotation_interval()
