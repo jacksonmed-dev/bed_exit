@@ -119,24 +119,24 @@ class BedExitMonitor:
     def status_monitor(self):
         i = 0
         while True:
-            is_sensor_connected = check_sensor_connection()
-            logger.info(f"is_sensor_connected: {is_sensor_connected}")
+            # is_sensor_connected = check_sensor_connection()
+            # logger.info(f"is_sensor_connected: {is_sensor_connected}")
+            attended = get_attended()
+            body = get_body()
+            current_frame = get_current_frame()
+            storage = get_storage()
 
-            if is_sensor_connected:
-                attended = get_attended()
-                body = get_body()
-                current_frame = get_current_frame()
-                storage = get_storage()
+            logger.info(f"attended: {attended}")
+            logger.info(f"body: {body}")
+            logger.info(f"current_frame: {current_frame}")
+            logger.info(f"storage: {storage}")
+            # if is_sensor_connected:
 
-                logger.info(f"attended: {attended}")
-                logger.info(f"body: {body}")
-                logger.info(f"current_frame: {current_frame}")
-                logger.info(f"storage: {storage}")
 
-            else:
-                logger.error(f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
-                self.kinesis_client.write_cloudwatch_log(
-                    f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
+            # else:
+            #     logger.error(f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
+            #     self.kinesis_client.write_cloudwatch_log(
+            #         f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
 
             time.sleep(1)
             i = i + 1
