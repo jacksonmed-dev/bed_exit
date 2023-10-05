@@ -9,7 +9,7 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
-    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor
+    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor, set_default_filters, get_attended, get_body, get_current_frame, get_storage
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
@@ -73,9 +73,10 @@ class BedExitMonitor:
             # Start the API Monitor
             # Set the turn timer to default value
             reset_rotation_interval()
-            self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-            self.api_monitor_sse_client_thread.start()
-            time.sleep(2)
+            set_default_filters()
+            # self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
+            # self.api_monitor_sse_client_thread.start()
+            # time.sleep(2)
 
             self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
             self.lcd_manager.line1 = "Sensor: Connected"
@@ -87,26 +88,56 @@ class BedExitMonitor:
             self.lcd_manager.line1 = "Connect Wifi In App"
             self.lcd_manager.line2 = "WiFi: Not Connected"
 
+    # def status_monitor(self):
+    #     i = 0
+    #     while True:
+    #         # check sensor connection
+    #         if self.sse_client_last_updated_at is not None:
+    #             time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
+    #             if time_since_last_update > 20:
+    #                 if not self.sensor_recovery_in_progress:
+    #                     self.sensor_recovery_in_progress = True
+    #                     logger.info("Starting sensor recovery thread")
+    #                     self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} lost connection. Starting recovery thread")
+    #                     threading.Thread(target=self.sensor_recovery).start()
+    #
+    #         # check network connection
+    #         is_network_connected = check_internet_connection()
+    #         if not is_network_connected:
+    #             self.lcd_manager.line2 = "WiFi: Failed"
+    #             logger.error("Wifi Connection lost... Attempting to reconnect")
+    #
+    #         # check bluetooth status
+    #         time.sleep(1)
+    #         i = i + 1
+    #         if i % 10 == 0:
+    #             i = 0  # Reset i to 0, not 1
+    #             logger.info("Health Check Passed")
+    #             self.kinesis_client.write_cloudwatch_log(
+    #                 f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
+
     def status_monitor(self):
         i = 0
         while True:
-            # check sensor connection
-            if self.sse_client_last_updated_at is not None:
-                time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
-                if time_since_last_update > 20:
-                    if not self.sensor_recovery_in_progress:
-                        self.sensor_recovery_in_progress = True
-                        logger.info("Starting sensor recovery thread")
-                        self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} lost connection. Starting recovery thread")
-                        threading.Thread(target=self.sensor_recovery).start()
+            is_sensor_connected = check_sensor_connection()
+            logger.info(f"is_sensor_connected: {is_sensor_connected}")
 
-            # check network connection
-            is_network_connected = check_internet_connection()
-            if not is_network_connected:
-                self.lcd_manager.line2 = "WiFi: Failed"
-                logger.error("Wifi Connection lost... Attempting to reconnect")
+            if is_sensor_connected:
+                attended = get_attended()
+                body = get_body()
+                current_frame = get_current_frame()
+                storage = get_storage()
 
-            # check bluetooth status
+                logger.info(f"attended: {attended}")
+                logger.info(f"body: {body}")
+                logger.info(f"current_frame: {current_frame}")
+                logger.info(f"storage: {storage}")
+
+            else:
+                logger.error(f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
+                self.kinesis_client.write_cloudwatch_log(
+                    f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
+
             time.sleep(1)
             i = i + 1
             if i % 10 == 0:
