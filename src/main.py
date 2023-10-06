@@ -90,39 +90,9 @@ class BedExitMonitor:
             self.lcd_manager.line1 = "Connect Wifi In App"
             self.lcd_manager.line2 = "WiFi: Not Connected"
 
-    # def status_monitor(self):
-    #     i = 0
-    #     while True:
-    #         # check sensor connection
-    #         if self.sse_client_last_updated_at is not None:
-    #             time_since_last_update = (datetime.now() - self.sse_client_last_updated_at).total_seconds()
-    #             if time_since_last_update > 20:
-    #                 if not self.sensor_recovery_in_progress:
-    #                     self.sensor_recovery_in_progress = True
-    #                     logger.info("Starting sensor recovery thread")
-    #                     self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} lost connection. Starting recovery thread")
-    #                     threading.Thread(target=self.sensor_recovery).start()
-    #
-    #         # check network connection
-    #         is_network_connected = check_internet_connection()
-    #         if not is_network_connected:
-    #             self.lcd_manager.line2 = "WiFi: Failed"
-    #             logger.error("Wifi Connection lost... Attempting to reconnect")
-    #
-    #         # check bluetooth status
-    #         time.sleep(1)
-    #         i = i + 1
-    #         if i % 10 == 0:
-    #             i = 0  # Reset i to 0, not 1
-    #             logger.info("Health Check Passed")
-    #             self.kinesis_client.write_cloudwatch_log(
-    #                 f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
-
     def status_monitor(self):
         i = 0
         while True:
-            # is_sensor_connected = check_sensor_connection()
-            # logger.info(f"is_sensor_connected: {is_sensor_connected}")
             monitor = get_monitor()
             if monitor:
                 storage = monitor['storage']['used']
@@ -143,8 +113,8 @@ class BedExitMonitor:
 
                 if self.is_present and not is_present:
                     self.is_present = is_present
-                    logger.info("--- PATIENT EXIT DETECTED ---")
-                    logger.info("---- SENDING EXIT EVENT -----")
+                    logger.info("---   PATIENT EXIT DETECTED ---")
+                    logger.info("---   SENDING EXIT EVENT    ---")
                     self.kinesis_client.write_cloudwatch_log(
                         f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
                     self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
@@ -161,12 +131,6 @@ class BedExitMonitor:
                     delete_all_frames()
 
             logger.info(f"monitor: {monitor}")
-
-            # else:
-            #     logger.error(f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
-            #     self.kinesis_client.write_cloudwatch_log(
-            #         f"Sensor {os.environ['SENSOR_SSID']}: Sensor Connection Lost... Attempting to Reconnect")
-
             time.sleep(1)
             i = i + 1
             if i % 10 == 0:
