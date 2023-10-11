@@ -8,9 +8,8 @@ from datetime import datetime
 from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
-from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, set_frequency, \
-    set_rotation_interval, reset_rotation_interval, check_sensor_connection, initialize_default_sensor, \
-    set_default_filters, get_attended, get_body, get_current_frame, get_storage, get_monitor
+from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
+    check_sensor_connection, initialize_default_sensor, get_monitor
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
