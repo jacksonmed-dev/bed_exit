@@ -5,7 +5,6 @@ import logging
 import time
 from datetime import datetime
 
-from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
@@ -13,6 +12,7 @@ from sensor import get_frames_within_window, format_sensor_data, delete_all_fram
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,6 +23,25 @@ logHandler.setFormatter(formatter)
 filelogHandler.setFormatter(formatter)
 logger.addHandler(filelogHandler)
 logger.addHandler(logHandler)
+
+
+class ConnectionStatus(Enum):
+    INITIALIZING = "initializing"
+    CONNECTED = "connected"
+    NOT_CONNECTED = "not connected"
+    DISCONNECTING = "disconnecting"
+
+
+class ConnectionType(Enum):
+    BLUETOOTH = "bluetooth"
+    SENSOR = "sensor"
+    WIFI = "wifi"
+
+
+class Events(Enum):
+    BED_EXIT = "bedExit"
+    BED_ENTRY = "bedEntry"
+    TURN_TIMER = "turnTimerExpire"
 
 
 class BedExitMonitor:
@@ -51,7 +70,7 @@ class BedExitMonitor:
     def start(self):
         # Cleanup GPIP
         cleanup()
-        self.lcd_manager.line1 = "Initializing Bluetooth"
+        self.update_hardware_status(ConnectionType.BLUETOOTH, ConnectionStatus.INITIALIZING)
 
         # Start the Bluetooth service in a separate thread
         bluetooth_service = BluetoothService(callback=self.ble_controller)
@@ -59,36 +78,35 @@ class BedExitMonitor:
         self.bluetooth_service_thread.start()
         # time.sleep(2)
 
-        self.lcd_manager.line2 = "Initializing Sensor"
+        self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.INITIALIZING)
 
         network_connection = check_internet_connection()
 
         if network_connection:
-            # Start the API Monitor
-            # Set the turn timer to default value
             reset_rotation_interval()
             set_default_filters()
             delete_all_frames()
 
             self.write_logs("Starting...")
-            self.lcd_manager.line1 = "Sensor: Connected"
-            self.lcd_manager.line2 = "WiFi: Connected"
+
+            self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
+            self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
             self.monitor_thread = threading.Thread(target=self.status_monitor)
             self.monitor_thread.start()
         else:
             self.write_logs("Wifi Connection Failed...", write_aws=False)
-            self.lcd_manager.line1 = "Connect Wifi In App"
-            self.lcd_manager.line2 = "WiFi: Not Connected"
+            self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
+            self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.NOT_CONNECTED)
 
     def status_monitor(self):
         reset_rotation_interval()
         set_default_filters()
         delete_all_frames()
 
-        self.write_logs(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
-        self.lcd_manager.line1 = "Sensor: Connected"
-        self.lcd_manager.line2 = "WiFi: Connected"
+        self.write_logs(f"Sensor {os.environ['SENSOR_SSID']} Starting...")
+        self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
+        self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
         i = 0
         while True:
@@ -98,7 +116,9 @@ class BedExitMonitor:
                 self.handle_turn_timer(monitor['attended']['countdown'])
                 self.handle_bed_exit(monitor['body']['present'])
                 self.handle_storage(monitor['storage']['used'])
-                logger.info(f"monitor: {monitor}")
+
+                logger.debug(f"monitor: {monitor}")
+
                 time.sleep(1)
             elif datetime.now() - self.sensor_last_received_at > 20:
                 self.sensor_recovery()
@@ -110,16 +130,11 @@ class BedExitMonitor:
     def handle_bed_exit(self, is_sensor_present):
         if self.is_present and not is_sensor_present:
             self.is_present = is_sensor_present
-            self.write_logs(f"Patient Exit Detected")
-            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedExit",
-                                                   "sensorId": os.environ["SENSOR_SSID"]})
+            self.write_aws_event(Events.BED_EXIT)
+
         elif not self.is_present and is_sensor_present:
             self.is_present = is_sensor_present
-            logger.info("--- PATIENT ENTRY DETECTED ---")
-            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedEntry",
-                                                   "sensorId": os.environ["SENSOR_SSID"]})
+            self.write_aws_event(Events.BED_ENTRY)
 
     def handle_storage(self, storage):
         if storage > 80:
@@ -128,91 +143,31 @@ class BedExitMonitor:
     def handle_turn_timer(self, countdown):
         if countdown < 0:
             if self.is_present:
-                logger.info("--- TURN TIMER EXPIRED ---")
-                self.kinesis_client.write_cloudwatch_log(
-                    f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
-                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                      {"eventType": "turnTimerExpire",
-                                                       "sensorId": os.environ["SENSOR_SSID"]})
+                self.write_aws_event(Events.TURN_TIMER)
                 reset_rotation_interval()
             else:
                 reset_rotation_interval()
 
     def sensor_recovery(self):
-        self.lcd_manager.line1 = "Recovering Sensor Connection"
-        is_sensor_connected = check_sensor_connection()
-        if is_sensor_connected:
-            logger.info("Sensor connection re-established")
-            self.kinesis_client.write_cloudwatch_log(
-                f"Sensor {os.environ['SENSOR_SSID']} connection reestablished")
-            self.lcd_manager.line1 = "Sensor: Connected"
-            # This means the sse client stopped working. But the connection still exists. Restart the sse client
-            self.sse_client_last_updated_at = datetime.now()
-            self.stop_api_monitor_sse_client()
-            self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-            self.api_monitor_sse_client_thread.start()
-            self.sensor_recovery_in_progress = False
-            logger.info("api_monitor_sse_client_thread: non blocking")
-        else:
-            # cycle the sensor.
-            logger.info("Cycling the sensor power")
-            self.kinesis_client.write_cloudwatch_log(
-                f"Sensor {os.environ['SENSOR_SSID']}: Cycling sensor power")
-            turn_relay_on(self.gpio_pin)
-            time.sleep(5)
-            turn_relay_off(self.gpio_pin)
-            # Wait for sensor to connect
-            for i in range(10):
-                is_sensor_connected = check_sensor_connection()
-                if is_sensor_connected:
-                    logger.info("Sensor connection re-established")
-                    self.kinesis_client.write_cloudwatch_log(
-                        f"Sensor {os.environ['SENSOR_SSID']} connection reestablished")
-                    self.lcd_manager.line1 = "Sensor: Connected"
-                    self.sse_client_last_updated_at = datetime.now()
-                    logger.info("Stopping sse thread")
-                    self.stop_api_monitor_sse_client()
-                    logger.info("Starting new sse thread")
-                    self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-                    self.api_monitor_sse_client_thread.start()
-                    self.sensor_recovery_in_progress = False
-                    break
-                time.sleep(2)
+        self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.INITIALIZING)
+        self.write_logs("Cycling the sensor power")
 
-    def ble_controller(self, parsed_info):
-        input_array = parsed_info.split(',')
+        turn_relay_on(self.gpio_pin)
+        time.sleep(5)
+        turn_relay_off(self.gpio_pin)
 
-        if not input_array:
-            return  # Empty array, nothing to do
-
-        command = input_array[0].lower()
-
-        if command == "wifi":
-            if len(input_array) >= 4:
-                network_ssid, network_password = input_array[1:3]
-                logger.info("initializing sensor wifi connection")
-                connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
-                                        wireless_interface="wlan0")
-                is_network_connected = check_internet_connection()
-                # is_sensor_connected = check_sensor_connection()
-                if is_network_connected:
-                    self.lcd_manager.line1 = "Sensor: Connected"
-                    self.lcd_manager.line2 = "WiFi: Connected"
-                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
-                                                          {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
-                    self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-                    self.api_monitor_sse_client_thread.start()
-                    time.sleep(2)
-
-                    self.monitor_thread = threading.Thread(target=self.status_monitor)
-                    self.monitor_thread.start()
-        elif command == "bed_id":
-            if len(input_array) >= 2:
-                bed_id = input_array[1]
-                self.bed_id = bed_id
-                logger.info(f"setting the bed id: {self.bed_id}")
-                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
-                                                      {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
+        max_retry = 10
+        for i in range(max_retry):
+            is_sensor_connected = check_sensor_connection()
+            if is_sensor_connected:
+                self.write_logs("Sensor connection re-established")
+                self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
+                self.sse_client_last_updated_at = datetime.now()
+                return True
+            else:
+                self.write_logs(f"Re-establishing connection failed. Attempt: {i + 1}/{max_retry}")
+            time.sleep(2)
+        return False
 
     def write_logs(self, text, write_aws=True):
         logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
@@ -225,6 +180,47 @@ class BedExitMonitor:
                                               {"eventType": event,
                                                "sensorId": os.environ["SENSOR_SSID"]})
 
+    def write_lcd(self, line1, line2):
+        if line1:
+            self.lcd_manager.line1 = "Sensor: Connected"
+        if line2:
+            self.lcd_manager.line2 = "WiFi: Connected"
+
+    def update_hardware_status(self, connection_type, status):
+        if connection_type == ConnectionType.SENSOR:
+            self.lcd_manager.line1 = f"{connection_type}: {status}"
+        elif connection_type == ConnectionType.WIFI:
+            self.lcd_manager.line2 = f"{connection_type}: {status}"
+        elif connection_type == ConnectionType.BLUETOOTH:
+            self.lcd_manager.line1 = f"{connection_type}: {status}"
+        else:
+            self.lcd_manager.line1 = f"{connection_type}: {status}"
+
+    def ble_controller(self, parsed_info):
+        input_array = parsed_info.split(',')
+        if not input_array:
+            return  # Empty array, nothing to do
+
+        command = input_array[0].lower()
+
+        if command == "wifi":
+            if len(input_array) >= 4:
+                network_ssid, network_password = input_array[1:3]
+                self.write_logs("initializing sensor wifi connection")
+                connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
+                                        wireless_interface="wlan0")
+                is_network_connected = check_internet_connection()
+                # is_sensor_connected = check_sensor_connection()
+                if is_network_connected:
+                    self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
+                    self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
+
+                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
+                                                          {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
+                    time.sleep(2)
+
+                    self.monitor_thread = threading.Thread(target=self.status_monitor)
+                    self.monitor_thread.start()
 
 if __name__ == '__main__':
     service = BedExitMonitor()
