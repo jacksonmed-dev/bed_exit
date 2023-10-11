@@ -47,13 +47,7 @@ class Events(Enum):
 class BedExitMonitor:
     def __init__(self):
         self.lcd_manager = ScrollingText()
-        self.bed_id = None
         self.is_present = False
-        self.is_sensor_present = False
-        self.is_timer_enabled = False
-        self.timer_thread = None
-        self.frame_id = None
-        self.sensor_url = os.environ["SENSOR_URL"]
         self.gpio_pin = 4
 
         # all threads
