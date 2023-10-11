@@ -56,9 +56,6 @@ class BedExitMonitor:
         # Health Check Thread
         self.health_check_thread = None
 
-        # SSE Client
-        self.sensor_last_received_at = datetime.now()
-
         # Monitor
         self.monitor_thread = None
         self.status_monitor_flag = True
@@ -107,20 +104,24 @@ class BedExitMonitor:
         self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
         self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
+        sensor_last_received_at = datetime.now()
+        previous_monitor_response = {}
+
         while True:
             if not self.status_monitor_flag:
                 return
 
             monitor = get_monitor()
-            if monitor:
-                self.sensor_last_received_at = datetime.now()
+            if monitor and monitor != previous_monitor_response:
+                previous_monitor_response = monitor
+                sensor_last_received_at = datetime.now()
                 self.handle_turn_timer(monitor['attended']['countdown'])
                 self.handle_bed_exit(monitor['body']['present'])
                 self.handle_storage(monitor['storage']['used'])
 
                 logger.debug(f"monitor: {monitor}")
                 time.sleep(1)
-            elif (datetime.now() - self.sensor_last_received_at) > timedelta(seconds=20):
+            elif (datetime.now() - sensor_last_received_at) > timedelta(seconds=20):
                 is_recovered = False
                 while not is_recovered:
                     is_recovered = self.sensor_recovery()
@@ -164,7 +165,6 @@ class BedExitMonitor:
             if is_sensor_connected:
                 self.write_logs("Sensor connection re-established")
                 self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
-                self.sensor_last_received_at = datetime.now()
                 return True
             else:
                 self.write_logs(f"Re-establishing connection failed. Attempt: {i + 1}/{max_retry}")
