@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta
 
 from bluetooth_package import BluetoothService
-from kinesis import KinesisClient
+from kinesis import AwsClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
@@ -60,7 +60,7 @@ class BedExitMonitor:
         self.monitor_thread = None
         self.status_monitor_flag = True
 
-        self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
+        self.aws_client = AwsClient()  # Replace `KinesisClient` with the actual client initialization code
 
     def start(self):
         # Start Health Check
@@ -174,12 +174,12 @@ class BedExitMonitor:
     def write_logs(self, text, write_aws=True):
         logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
         if write_aws:
-            self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+            self.aws_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
 
     def write_aws_event(self, event):
         self.write_logs(f"Writing Event: {event}")
-        self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                              {"eventType": event,
+        self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                          {"eventType": event,
                                                "sensorId": os.environ["SENSOR_SSID"]})
 
     def update_hardware_status(self, connection_type, status):
@@ -210,8 +210,8 @@ class BedExitMonitor:
                     self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
                     self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
-                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
-                                                          {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
+                    self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{input_array[3]}",
+                                                      {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
                     time.sleep(2)
 
                     self.monitor_thread = threading.Thread(target=self.status_monitor)

@@ -23,7 +23,7 @@ logger.addHandler(filelogHandler)
 logger.addHandler(logHandler)
 
 
-class KinesisClient:
+class AwsClient:
 
     def __init__(self):
         self.session = boto3.Session(

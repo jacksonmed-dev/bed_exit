@@ -1,1 +1,1 @@
-from .kinesis import KinesisClient
+from .kinesis import AwsClient
