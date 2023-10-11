@@ -85,15 +85,6 @@ class BedExitMonitor:
         network_connection = check_internet_connection()
 
         if network_connection:
-            reset_rotation_interval()
-            set_default_filters()
-            delete_all_frames()
-
-            self.write_logs("Starting...")
-
-            self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
-            self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
-
             self.status_monitor_flag = True
             self.monitor_thread = threading.Thread(target=self.status_monitor)
             self.monitor_thread.start()
@@ -107,7 +98,6 @@ class BedExitMonitor:
             self.write_logs("Health Check Passed")
             time.sleep(10)
 
-
     def status_monitor(self):
         reset_rotation_interval()
         set_default_filters()
@@ -119,7 +109,7 @@ class BedExitMonitor:
 
         i = 0
         while True:
-            if self.status_monitor_flag:
+            if not self.status_monitor_flag:
                 return
 
             monitor = get_monitor()
@@ -222,6 +212,7 @@ class BedExitMonitor:
 
                     self.monitor_thread = threading.Thread(target=self.status_monitor)
                     self.monitor_thread.start()
+
 
 if __name__ == '__main__':
     service = BedExitMonitor()
