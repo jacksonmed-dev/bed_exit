@@ -40,13 +40,8 @@ class BedExitMonitor:
         # all threads
         self.bluetooth_service_thread = None
 
-        self.sensor_recovery_in_progress = False
-
         # SSE Client
-        self.api_monitor_sse_client_thread = None
-        self.sse_client = None
-        self.api_monitor_sse_client_thread_stop_flag = False
-        self.sse_client_last_updated_at = datetime.now()
+        self.sensor_last_received_at = datetime.now()
 
         # Monitor
         self.monitor_thread = None
@@ -75,40 +70,47 @@ class BedExitMonitor:
             set_default_filters()
             delete_all_frames()
 
-            self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
+            self.write_logs("Starting...")
             self.lcd_manager.line1 = "Sensor: Connected"
             self.lcd_manager.line2 = "WiFi: Connected"
 
             self.monitor_thread = threading.Thread(target=self.status_monitor)
             self.monitor_thread.start()
         else:
+            self.write_logs("Wifi Connection Failed...", write_aws=False)
             self.lcd_manager.line1 = "Connect Wifi In App"
             self.lcd_manager.line2 = "WiFi: Not Connected"
 
     def status_monitor(self):
+        reset_rotation_interval()
+        set_default_filters()
+        delete_all_frames()
+
+        self.write_logs(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
+        self.lcd_manager.line1 = "Sensor: Connected"
+        self.lcd_manager.line2 = "WiFi: Connected"
+
         i = 0
         while True:
             monitor = get_monitor()
             if monitor:
+                self.sensor_last_received_at = datetime.now()
                 self.handle_turn_timer(monitor['attended']['countdown'])
                 self.handle_bed_exit(monitor['body']['present'])
                 self.handle_storage(monitor['storage']['used'])
-            logger.info(f"monitor: {monitor}")
-            time.sleep(1)
+                logger.info(f"monitor: {monitor}")
+                time.sleep(1)
+            elif datetime.now() - self.sensor_last_received_at > 20:
+                self.sensor_recovery()
             i = i + 1
             if i % 10 == 0:
                 i = 0  # Reset i to 0, not 1
-                logger.info("Health Check Passed")
-                self.kinesis_client.write_cloudwatch_log(
-                    f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
+                self.write_logs("Health Check Passed")
 
     def handle_bed_exit(self, is_sensor_present):
         if self.is_present and not is_sensor_present:
             self.is_present = is_sensor_present
-            logger.info("---   PATIENT EXIT DETECTED ---")
-            logger.info("---   SENDING EXIT EVENT    ---")
-            self.kinesis_client.write_cloudwatch_log(
-                f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
+            self.write_logs(f"Patient Exit Detected")
             self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                                   {"eventType": "bedExit",
                                                    "sensorId": os.environ["SENSOR_SSID"]})
@@ -211,6 +213,17 @@ class BedExitMonitor:
                 logger.info(f"setting the bed id: {self.bed_id}")
                 self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + f"/bed/{self.bed_id}",
                                                       {"sensorId": os.environ["SENSOR_SSID"]}, method="PATCH")
+
+    def write_logs(self, text, write_aws=True):
+        logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+        if write_aws:
+            self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+
+    def write_aws_event(self, event):
+        self.write_logs(f"Writing Event: {event}")
+        self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                              {"eventType": event,
+                                               "sensorId": os.environ["SENSOR_SSID"]})
 
 
 if __name__ == '__main__':

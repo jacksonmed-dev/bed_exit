@@ -22,6 +22,7 @@ filelogHandler.setFormatter(formatter)
 logger.addHandler(filelogHandler)
 logger.addHandler(logHandler)
 
+
 class KinesisClient:
 
     def __init__(self):
@@ -114,7 +115,6 @@ class KinesisClient:
         logger.info(f"Wrote all records successfully")
         logger.info("############ END KINESIS ###########")
 
-
     def write_cloudwatch_log(self, message):
         now_ns = time.time_ns()
         now_ms = int(now_ns / 1000000)
@@ -129,4 +129,3 @@ class KinesisClient:
                 },
             ],
         )
-
