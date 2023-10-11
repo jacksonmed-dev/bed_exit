@@ -180,7 +180,7 @@ class BedExitMonitor:
         self.write_logs(f"Writing Event: {event}")
         self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                           {"eventType": event,
-                                               "sensorId": os.environ["SENSOR_SSID"]})
+                                           "sensorId": os.environ["SENSOR_SSID"]})
 
     def update_hardware_status(self, connection_type, status):
         if connection_type == ConnectionType.SENSOR:
