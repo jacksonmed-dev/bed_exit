@@ -53,6 +53,9 @@ class BedExitMonitor:
         # all threads
         self.bluetooth_service_thread = None
 
+        # Health Check Thread
+        self.health_check_thread = None
+
         # SSE Client
         self.sensor_last_received_at = datetime.now()
 
@@ -63,6 +66,10 @@ class BedExitMonitor:
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
     def start(self):
+        # Start Health Check
+        self.health_check_thread = threading.Thread(target=self.health_check)
+        self.health_check_thread.start()
+
         # Cleanup GPIP
         cleanup()
         self.update_hardware_status(ConnectionType.BLUETOOTH, ConnectionStatus.INITIALIZING)
@@ -95,6 +102,12 @@ class BedExitMonitor:
             self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
             self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.NOT_CONNECTED)
 
+    def health_check(self):
+        while True:
+            self.write_logs("Health Check Passed")
+            time.sleep(10)
+
+
     def status_monitor(self):
         reset_rotation_interval()
         set_default_filters()
@@ -117,14 +130,9 @@ class BedExitMonitor:
                 self.handle_storage(monitor['storage']['used'])
 
                 logger.debug(f"monitor: {monitor}")
-
                 time.sleep(1)
             elif (datetime.now() - self.sensor_last_received_at) > timedelta(seconds=20):
                 self.sensor_recovery()
-            i = i + 1
-            if i % 10 == 0:
-                i = 0  # Reset i to 0, not 1
-                self.write_logs("Health Check Passed")
 
     def handle_bed_exit(self, is_sensor_present):
         if self.is_present and not is_sensor_present:
@@ -178,12 +186,6 @@ class BedExitMonitor:
         self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
                                               {"eventType": event,
                                                "sensorId": os.environ["SENSOR_SSID"]})
-
-    def write_lcd(self, line1, line2):
-        if line1:
-            self.lcd_manager.line1 = "Sensor: Connected"
-        if line2:
-            self.lcd_manager.line2 = "WiFi: Connected"
 
     def update_hardware_status(self, connection_type, status):
         if connection_type == ConnectionType.SENSOR:
