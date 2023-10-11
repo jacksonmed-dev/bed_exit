@@ -70,7 +70,7 @@ class BedExitMonitor:
         self.health_check_thread = threading.Thread(target=self.health_check)
         self.health_check_thread.start()
 
-        # Cleanup GPIP
+        # Cleanup GPIO
         cleanup()
         self.update_hardware_status(ConnectionType.BLUETOOTH, ConnectionStatus.INITIALIZING)
 
@@ -121,7 +121,9 @@ class BedExitMonitor:
                 logger.debug(f"monitor: {monitor}")
                 time.sleep(1)
             elif (datetime.now() - self.sensor_last_received_at) > timedelta(seconds=20):
-                self.sensor_recovery()
+                is_recovered = False
+                while not is_recovered:
+                    is_recovered = self.sensor_recovery()
 
     def handle_bed_exit(self, is_sensor_present):
         if self.is_present and not is_sensor_present:
@@ -154,6 +156,10 @@ class BedExitMonitor:
 
         max_retry = 10
         for i in range(max_retry):
+            # Used for Thread Management. Cannot wait for 20 + seconds.
+            if not self.status_monitor_flag:
+                return
+
             is_sensor_connected = check_sensor_connection()
             if is_sensor_connected:
                 self.write_logs("Sensor connection re-established")
@@ -200,7 +206,6 @@ class BedExitMonitor:
                 connect_to_wifi_network(network_ssid=network_ssid, network_password=network_password,
                                         wireless_interface="wlan0")
                 is_network_connected = check_internet_connection()
-                # is_sensor_connected = check_sensor_connection()
                 if is_network_connected:
                     self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
                     self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
