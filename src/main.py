@@ -96,7 +96,7 @@ class BedExitMonitor:
     def health_check(self):
         while True:
             self.write_logs("Health Check Passed")
-            time.sleep(10)
+            time.sleep(300)
 
     def status_monitor(self):
         reset_rotation_interval()
@@ -107,7 +107,6 @@ class BedExitMonitor:
         self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
         self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
-        i = 0
         while True:
             if not self.status_monitor_flag:
                 return
@@ -159,7 +158,7 @@ class BedExitMonitor:
             if is_sensor_connected:
                 self.write_logs("Sensor connection re-established")
                 self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
-                self.sse_client_last_updated_at = datetime.now()
+                self.sensor_last_received_at = datetime.now()
                 return True
             else:
                 self.write_logs(f"Re-establishing connection failed. Attempt: {i + 1}/{max_retry}")
