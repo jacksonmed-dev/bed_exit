@@ -9,7 +9,7 @@ from sseclient import SSEClient
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
-    check_sensor_connection, initialize_default_sensor, get_monitor
+    check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
@@ -55,7 +55,6 @@ class BedExitMonitor:
 
     def start(self):
         # Cleanup GPIP
-
         cleanup()
         self.lcd_manager.line1 = "Initializing Bluetooth"
 
@@ -73,11 +72,8 @@ class BedExitMonitor:
             # Start the API Monitor
             # Set the turn timer to default value
             reset_rotation_interval()
-            # set_default_filters()
+            set_default_filters()
             delete_all_frames()
-            # self.api_monitor_sse_client_thread = threading.Thread(target=self.api_monitor_sse_client)
-            # self.api_monitor_sse_client_thread.start()
-            # time.sleep(2)
 
             self.kinesis_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']} Starting..")
             self.lcd_manager.line1 = "Sensor: Connected"
@@ -94,41 +90,9 @@ class BedExitMonitor:
         while True:
             monitor = get_monitor()
             if monitor:
-                storage = monitor['storage']['used']
-                is_present = monitor['body']['present']
-                countdown = monitor['attended']['countdown']
-
-                if countdown < 0:
-                    if self.is_present:
-                        logger.info("--- TURN TIMER EXPIRED ---")
-                        self.kinesis_client.write_cloudwatch_log(
-                            f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
-                        self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                              {"eventType": "turnTimerExpire",
-                                                               "sensorId": os.environ["SENSOR_SSID"]})
-                        reset_rotation_interval()
-                    else:
-                        reset_rotation_interval()
-
-                if self.is_present and not is_present:
-                    self.is_present = is_present
-                    logger.info("---   PATIENT EXIT DETECTED ---")
-                    logger.info("---   SENDING EXIT EVENT    ---")
-                    self.kinesis_client.write_cloudwatch_log(
-                        f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
-                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                          {"eventType": "bedExit",
-                                                           "sensorId": os.environ["SENSOR_SSID"]})
-                elif not self.is_present and is_present:
-                    self.is_present = is_present
-                    logger.info("--- PATIENT ENTRY DETECTED ---")
-                    self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                          {"eventType": "bedEntry",
-                                                           "sensorId": os.environ["SENSOR_SSID"]})
-
-                if storage > 80:
-                    delete_all_frames()
-
+                self.handle_turn_timer(monitor['attended']['countdown'])
+                self.handle_bed_exit(monitor['body']['present'])
+                self.handle_storage(monitor['storage']['used'])
             logger.info(f"monitor: {monitor}")
             time.sleep(1)
             i = i + 1
@@ -137,6 +101,40 @@ class BedExitMonitor:
                 logger.info("Health Check Passed")
                 self.kinesis_client.write_cloudwatch_log(
                     f"Sensor {os.environ['SENSOR_SSID']}: Health Check Passed")
+
+    def handle_bed_exit(self, is_sensor_present):
+        if self.is_present and not is_sensor_present:
+            self.is_present = is_sensor_present
+            logger.info("---   PATIENT EXIT DETECTED ---")
+            logger.info("---   SENDING EXIT EVENT    ---")
+            self.kinesis_client.write_cloudwatch_log(
+                f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
+            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                  {"eventType": "bedExit",
+                                                   "sensorId": os.environ["SENSOR_SSID"]})
+        elif not self.is_present and is_sensor_present:
+            self.is_present = is_sensor_present
+            logger.info("--- PATIENT ENTRY DETECTED ---")
+            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                  {"eventType": "bedEntry",
+                                                   "sensorId": os.environ["SENSOR_SSID"]})
+
+    def handle_storage(self, storage):
+        if storage > 80:
+            delete_all_frames()
+
+    def handle_turn_timer(self, countdown):
+        if countdown < 0:
+            if self.is_present:
+                logger.info("--- TURN TIMER EXPIRED ---")
+                self.kinesis_client.write_cloudwatch_log(
+                    f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
+                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                                      {"eventType": "turnTimerExpire",
+                                                       "sensorId": os.environ["SENSOR_SSID"]})
+                reset_rotation_interval()
+            else:
+                reset_rotation_interval()
 
     def sensor_recovery(self):
         self.lcd_manager.line1 = "Recovering Sensor Connection"
@@ -179,126 +177,6 @@ class BedExitMonitor:
                     break
                 time.sleep(2)
 
-    def api_monitor_sse_client(self):
-        logger.info("starting the sse client")
-        self.kinesis_client.write_cloudwatch_log(
-            f"Sensor {os.environ['SENSOR_SSID']}: Starting sse client")
-        initialize_default_sensor()
-        url = f"{self.sensor_url}/api/monitor/sse"
-        self.sse_client = SSEClient(url)
-
-        try:
-            # Timer to periodically check the stopping flag
-            def check_stopping_flag():
-                while not self.api_monitor_sse_client_thread_stop_flag:
-                    time.sleep(1)  # Adjust the interval as needed
-
-                # If flag is set, close the SSE client and exit
-                logger.info("closing sse client")
-                self.kinesis_client.write_cloudwatch_log(
-                    f"Sensor {os.environ['SENSOR_SSID']}: Closing sse client")
-                raise Exception("Closing the sse client")
-
-            self.api_monitor_sse_client_thread_stop_flag = False
-            stopping_flag_timer = threading.Thread(target=check_stopping_flag)
-            stopping_flag_timer.start()
-
-            for response in self.sse_client:
-                if self.api_monitor_sse_client_thread_stop_flag:
-                    logger.info("closing sse client")
-                    return
-                self.sse_client_last_updated_at = datetime.now()
-                data = response.data.strip()
-                if response.event == "attended":
-                    self.handle_attended_event(data)
-                if response.event == 'body':
-                    self.handle_body_event(data)
-                if response.event == 'newframe':
-                    self.handle_new_frame_event(data)
-                if response.event == 'storage':
-                    self.handle_storage_event(data)
-
-        except Exception as e:
-            print("Exception in SSEClient loop:", e)
-            return
-
-    def stop_api_monitor_sse_client(self):
-        if self.api_monitor_sse_client_thread is not None and self.api_monitor_sse_client_thread.is_alive():
-            logger.info("api_monitor_sse_client_thread_stop_flag: True")
-            self.api_monitor_sse_client_thread_stop_flag = True
-            logger.info("joined")
-
-        self.api_monitor_sse_client_thread = None
-
-    def handle_attended_event(self, data):
-        is_ok = json.loads(data)['ok']
-        countdown = json.loads(data)['countdown']
-        if self.is_present:
-            logger.info(data)
-            if not is_ok and countdown == 0:
-                logger.info("--- TURN TIMER EXPIRED ---")
-                self.kinesis_client.write_cloudwatch_log(
-                    f"Sensor {os.environ['SENSOR_SSID']}: Patient Turn Timer Expired")
-                self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                      {"eventType": "turnTimerExpire",
-                                                       "sensorId": os.environ["SENSOR_SSID"]})
-                reset_rotation_interval()
-        else:
-            reset_rotation_interval()
-
-    def handle_body_event(self, data):
-        self.is_sensor_present = json.loads(data)['present']
-        logger.info(f"body event: {data}")
-
-        if self.is_timer_enabled and self.timer_thread is not None:
-            self.timer_thread.cancel()
-            self.run_update_patient_presence()
-
-        if self.is_present and not self.is_sensor_present and not self.is_timer_enabled:
-            logger.info("--- PATIENT EXIT DETECTED ---")
-            logger.info("---- SENDING EXIT EVENT -----")
-            self.kinesis_client.write_cloudwatch_log(
-                f"Sensor {os.environ['SENSOR_SSID']}: Patient Exit Detected")
-            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedExit", "sensorId": os.environ["SENSOR_SSID"]})
-            self.run_update_patient_presence()
-            frames = get_frames_within_window(self.frame_id)
-            formatted_data = format_sensor_data(frames, self.is_present, frequency=int(os.environ["SENSOR_FREQUENCY"]))
-            self.kinesis_client.put_records(formatted_data)
-
-        if not self.is_present and self.is_sensor_present and not self.is_timer_enabled:
-            logger.info("--- PATIENT ENTRY DETECTED ---")
-            self.kinesis_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                                  {"eventType": "bedEntry", "sensorId": os.environ["SENSOR_SSID"]})
-            self.run_update_patient_presence()
-
-        if not self.is_timer_enabled:
-            self.is_present = self.is_sensor_present
-        logger.info("\n\n")
-
-    def handle_new_frame_event(self, data):
-        self.frame_id = json.loads(data)['id']
-
-    def handle_storage_event(self, data):
-        logger.info("############## STORAGE EVENT ###############")
-        self.kinesis_client.write_cloudwatch_log(
-            f"Sensor {os.environ['SENSOR_SSID']}: Sensor Storage Full. Deleting to make space for new frames")
-        storage_field = json.loads(data)['used']
-        logger.info(f"Storage Used: {storage_field}%")
-        if storage_field > 85:
-            delete_all_frames()
-        logger.info("\n\n")
-
-    def update_patient_presence(self):
-        logger.info(f"Updating pi is_present to {self.is_sensor_present}")
-        self.is_present = self.is_sensor_present
-        self.is_timer_enabled = False
-
-    def run_update_patient_presence(self):
-        self.is_timer_enabled = True
-        self.timer_thread = threading.Timer(10, self.update_patient_presence)
-        self.timer_thread.start()
-
     def ble_controller(self, parsed_info):
         input_array = parsed_info.split(',')
 
@@ -306,13 +184,8 @@ class BedExitMonitor:
             return  # Empty array, nothing to do
 
         command = input_array[0].lower()
-        if command == 'start':
-            if len(input_array) >= 1:
-                self.api_monitor_sse_client()
-        elif command == 'stop':
-            if len(input_array) >= 1:
-                self.stop_api_monitor_sse_client()
-        elif command == "wifi":
+
+        if command == "wifi":
             if len(input_array) >= 4:
                 network_ssid, network_password = input_array[1:3]
                 logger.info("initializing sensor wifi connection")
