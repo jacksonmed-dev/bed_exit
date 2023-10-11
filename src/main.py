@@ -3,7 +3,7 @@ import os
 import threading
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bluetooth_package import BluetoothService
 from kinesis import KinesisClient
@@ -58,6 +58,7 @@ class BedExitMonitor:
 
         # Monitor
         self.monitor_thread = None
+        self.status_monitor_flag = True
 
         self.kinesis_client = KinesisClient()  # Replace `KinesisClient` with the actual client initialization code
 
@@ -86,6 +87,7 @@ class BedExitMonitor:
             self.update_hardware_status(ConnectionType.SENSOR, ConnectionStatus.CONNECTED)
             self.update_hardware_status(ConnectionType.WIFI, ConnectionStatus.CONNECTED)
 
+            self.status_monitor_flag = True
             self.monitor_thread = threading.Thread(target=self.status_monitor)
             self.monitor_thread.start()
         else:
@@ -104,6 +106,9 @@ class BedExitMonitor:
 
         i = 0
         while True:
+            if self.status_monitor_flag:
+                return
+
             monitor = get_monitor()
             if monitor:
                 self.sensor_last_received_at = datetime.now()
@@ -114,7 +119,7 @@ class BedExitMonitor:
                 logger.debug(f"monitor: {monitor}")
 
                 time.sleep(1)
-            elif datetime.now() - self.sensor_last_received_at > 20:
+            elif (datetime.now() - self.sensor_last_received_at) > timedelta(seconds=20):
                 self.sensor_recovery()
             i = i + 1
             if i % 10 == 0:
