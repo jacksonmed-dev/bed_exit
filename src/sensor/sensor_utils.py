@@ -1,5 +1,5 @@
 import json
-from src.logger import logger
+from logger import logger
 import os
 import uuid
 from datetime import datetime
