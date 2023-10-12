@@ -175,10 +175,10 @@ class BedExitMonitor:
         if write_aws:
             self.aws_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
 
-    def write_aws_event(self, event):
+    def write_aws_event(self, event: Events):
         self.write_logs(f"Writing Event: {event}")
         self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-                                          {"eventType": str(event),
+                                          {"eventType": event.value,
                                            "sensorId": os.environ["SENSOR_SSID"]})
 
     def update_hardware_status(self, connection_type, status):
