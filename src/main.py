@@ -101,6 +101,9 @@ class BedExitMonitor:
                 return
 
             monitor = get_monitor()
+            print("API: ", monitor)
+            print("Prev: ", previous_monitor_response)
+            print("Are Equal? : ", monitor == previous_monitor_response)
             if monitor and monitor != previous_monitor_response:
                 previous_monitor_response = monitor
                 sensor_last_received_at = datetime.now()
