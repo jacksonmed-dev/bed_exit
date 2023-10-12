@@ -10,4 +10,4 @@ pip3 install -r requirements.txt
 sudo hciconfig hci0 piscan
 
 # Run the Python program
-python3 ./src/main.py
+python3 ./src/main.py --log-level DEBUG
