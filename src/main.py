@@ -8,7 +8,7 @@ from bluetooth_package import BluetoothService
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
-# from aws_client import AwsClient
+from aws_client import AwsClient
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
 from enum import Enum
@@ -49,7 +49,7 @@ class BedExitMonitor:
         self.monitor_thread = None
         self.status_monitor_flag = True
 
-        # self.aws_client = AwsClient()  # Replace `KinesisClient` with the actual client initialization code
+        self.aws_client = AwsClient()  # Replace `KinesisClient` with the actual client initialization code
 
     def start(self):
         # Start Health Check
@@ -162,14 +162,14 @@ class BedExitMonitor:
 
     def write_logs(self, text, write_aws=True):
         logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
-        # if write_aws:
-            # self.aws_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+        if write_aws:
+            self.aws_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
 
     def write_aws_event(self, event):
         self.write_logs(f"Writing Event: {event}")
-        # self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
-        #                                   {"eventType": event,
-        #                                    "sensorId": os.environ["SENSOR_SSID"]})
+        self.aws_client.signed_request_v2(os.environ["JXN_API_URL"] + "/event",
+                                          {"eventType": event,
+                                           "sensorId": os.environ["SENSOR_SSID"]})
 
     def update_hardware_status(self, connection_type, status):
         if connection_type == ConnectionType.SENSOR:
