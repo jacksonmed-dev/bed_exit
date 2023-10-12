@@ -112,11 +112,11 @@ class BedExitMonitor:
                 self.handle_storage(monitor['storage']['used'])
 
                 logger.debug(f"monitor: {monitor}")
-                time.sleep(1)
             elif (datetime.now() - sensor_last_received_at) > timedelta(seconds=20):
                 is_recovered = False
                 while not is_recovered:
                     is_recovered = self.sensor_recovery()
+            time.sleep(1)
 
     def handle_bed_exit(self, is_sensor_present):
         if self.is_present and not is_sensor_present:
