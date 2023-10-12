@@ -15,7 +15,7 @@ class AwsClient:
             aws_access_key_id=os.environ["ACCESS_KEY_ID"],
             aws_secret_access_key=os.environ["ACCESS_KEY_SECRET"],
         )
-        self.kinesis_client = self.get_auth_client("aws_client")
+        self.kinesis_client = self.get_auth_client("kinesis")
         self.cloudwatchlogs_client = self.get_auth_client("logs")
 
     def signed_request_v2(self, endpoint, dataObj, method='POST'):
