@@ -169,7 +169,7 @@ class BedExitMonitor:
         if level == LogLevel.INFO:
             logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
         if level == LogLevel.WARNING:
-            logger.warn(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+            logger.warning(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
         if level == LogLevel.CRITICAL:
             logger.critical(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
         if write_aws:
