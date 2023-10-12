@@ -1,7 +1,8 @@
-import logging
 import argparse
+import logging
+from logging.handlers import TimedRotatingFileHandler
 
-
+# Create an argument parser
 parser = argparse.ArgumentParser(description="Logger configuration")
 parser.add_argument(
     "--log-level",
@@ -10,15 +11,23 @@ parser.add_argument(
     help="Set the log level (default: DEBUG)",
 )
 args = parser.parse_args()
+
+# Configure the logger based on the log level argument
 log_level = getattr(logging, args.log_level)
 
-# Configure the logger
-logger = logging.getLogger(__name__)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
+# Create a TimedRotatingFileHandler to split log files by day
+logHandler = TimedRotatingFileHandler(
+    "logs/logs.log",
+    when="midnight",
+    interval=1,
+    backupCount=7
+)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
+
+# Create and configure the logger
+logger = logging.getLogger(__name__)
 logger.addHandler(logHandler)
+
+# Set the logger level
 logger.setLevel(log_level)
