@@ -104,8 +104,7 @@ class BedExitMonitor:
             print("Are Equal? : ", monitor == previous_monitor_response)
             logger.debug(f"monitor: {monitor}")
 
-            # and monitor != previous_monitor_response
-            if monitor:
+            if monitor and monitor != previous_monitor_response:
                 previous_monitor_response = monitor
                 sensor_last_received_at = datetime.now()
                 self.handle_turn_timer(monitor['attended']['countdown'])
