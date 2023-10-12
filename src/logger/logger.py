@@ -1,6 +1,11 @@
 import argparse
 import logging
+import os
 from logging.handlers import TimedRotatingFileHandler
+
+log_directory = "logs"
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description="Logger configuration")
