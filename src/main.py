@@ -3,7 +3,7 @@ import os
 import threading
 import time
 from datetime import datetime, timedelta
-from logger import logger
+from logger import logger, LogLevel
 from bluetooth_package import BluetoothService
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
@@ -101,8 +101,7 @@ class BedExitMonitor:
                 return
 
             monitor = get_monitor()
-            print("Are Equal? : ", monitor == previous_monitor_response)
-            logger.debug(f"monitor: {monitor}")
+            self.write_logs(text=f"monitor: {monitor}", level=LogLevel.DEBUG, write_aws=False)
 
             if monitor and monitor != previous_monitor_response:
                 previous_monitor_response = monitor
@@ -111,6 +110,8 @@ class BedExitMonitor:
                 self.handle_bed_exit(monitor['body']['present'])
                 self.handle_storage(monitor['storage']['used'])
             elif (datetime.now() - sensor_last_received_at) > timedelta(seconds=20):
+                self.write_logs(text=f"Sensor Not Communicating with Pi. Last Received: {sensor_last_received_at}, "
+                                     f"Current Time: {datetime.now()}", level=LogLevel.WARNING, write_aws=False)
                 is_recovered = False
                 while not is_recovered:
                     is_recovered = self.sensor_recovery()
@@ -159,10 +160,18 @@ class BedExitMonitor:
             else:
                 self.write_logs(f"Re-establishing connection failed. Attempt: {i + 1}/{max_retry}")
             time.sleep(2)
+        self.write_logs(f"Re-establishing connection failed {max_retry} attempts", level=LogLevel.CRITICAL)
         return False
 
-    def write_logs(self, text, write_aws=True):
-        logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+    def write_logs(self, text, level=LogLevel.INFO, write_aws=True):
+        if level == LogLevel.DEBUG:
+            logger.debug(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+        if level == LogLevel.INFO:
+            logger.info(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+        if level == LogLevel.WARNING:
+            logger.warn(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
+        if level == LogLevel.CRITICAL:
+            logger.critical(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
         if write_aws:
             self.aws_client.write_cloudwatch_log(f"Sensor {os.environ['SENSOR_SSID']}: {text}")
 

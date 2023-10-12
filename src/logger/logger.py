@@ -1,11 +1,21 @@
 import argparse
 import logging
 import os
+from enum import Enum
 from logging.handlers import TimedRotatingFileHandler
 
 log_directory = "logs"
 if not os.path.exists(log_directory):
     os.makedirs(log_directory)
+
+
+class LogLevel(Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
 
 # Create an argument parser
 parser = argparse.ArgumentParser(description="Logger configuration")
