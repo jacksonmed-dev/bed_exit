@@ -24,7 +24,6 @@ logger.addHandler(logHandler)
 
 
 class AwsClient:
-
     def __init__(self):
         self.session = boto3.Session(
             aws_access_key_id=os.environ["ACCESS_KEY_ID"],

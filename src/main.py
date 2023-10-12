@@ -5,15 +5,13 @@ import time
 from datetime import datetime, timedelta
 from logger import logger
 from bluetooth_package import BluetoothService
-from aws_client import AwsClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
+from aws_client import AwsClient
 from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
 from enum import Enum
-
-
 
 
 class ConnectionStatus(Enum):
@@ -33,6 +31,7 @@ class Events(Enum):
     BED_EXIT = "bedExit"
     BED_ENTRY = "bedEntry"
     TURN_TIMER = "turnTimerExpire"
+
 
 class BedExitMonitor:
     def __init__(self):
