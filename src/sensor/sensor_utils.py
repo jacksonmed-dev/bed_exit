@@ -3,9 +3,10 @@ from logger import logger
 import os
 import uuid
 from datetime import datetime
-
 import requests
+from dotenv import load_dotenv
 
+load_dotenv()
 sensor_url = os.environ["SENSOR_URL"]
 
 
