@@ -9,6 +9,8 @@ from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
 class AwsClient:
     def __init__(self):
         self.session = boto3.Session(
