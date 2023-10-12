@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta
 from logger import logger
 from bluetooth_package import BluetoothService
-from aws import AwsClient
+from aws_client import AwsClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
