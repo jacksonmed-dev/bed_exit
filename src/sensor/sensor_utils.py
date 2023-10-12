@@ -1,5 +1,5 @@
 import json
-import logging
+from src.logger import logger
 import os
 import uuid
 from datetime import datetime
@@ -7,16 +7,6 @@ from datetime import datetime
 import requests
 
 sensor_url = os.environ["SENSOR_URL"]
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
 
 
 def initialize_default_sensor():
@@ -201,6 +191,7 @@ def get_body():
         logger.error("Error while checking sensor connection:", e)
         return False
 
+
 def get_current_frame():
     url = f"{sensor_url}/api/frames"
     try:
@@ -210,6 +201,7 @@ def get_current_frame():
     except Exception as e:
         logger.error("Error while checking sensor connection:", e)
         return False
+
 
 def get_monitor():
     url = f"{sensor_url}/api/monitor"
