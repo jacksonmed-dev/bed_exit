@@ -101,17 +101,16 @@ class BedExitMonitor:
                 return
 
             monitor = get_monitor()
-            print("API: ", monitor)
-            print("Prev: ", previous_monitor_response)
             print("Are Equal? : ", monitor == previous_monitor_response)
-            if monitor and monitor != previous_monitor_response:
+            logger.debug(f"monitor: {monitor}")
+
+            # and monitor != previous_monitor_response
+            if monitor:
                 previous_monitor_response = monitor
                 sensor_last_received_at = datetime.now()
                 self.handle_turn_timer(monitor['attended']['countdown'])
                 self.handle_bed_exit(monitor['body']['present'])
                 self.handle_storage(monitor['storage']['used'])
-
-                logger.debug(f"monitor: {monitor}")
             elif (datetime.now() - sensor_last_received_at) > timedelta(seconds=20):
                 is_recovered = False
                 while not is_recovered:
