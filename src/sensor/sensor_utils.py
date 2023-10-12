@@ -1,9 +1,10 @@
 import json
-from logger import logger
 import os
 import uuid
 from datetime import datetime
 import requests
+from logger import logger
+
 from dotenv import load_dotenv
 
 load_dotenv()

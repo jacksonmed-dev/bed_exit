@@ -1,28 +1,14 @@
-import logging
+from logger import logger
 import os
 import time
-
 import boto3
 import json
-
 import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from dotenv import load_dotenv
 
 load_dotenv()
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
-
-
 class AwsClient:
     def __init__(self):
         self.session = boto3.Session(
