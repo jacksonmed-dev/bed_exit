@@ -30,7 +30,7 @@ class AwsClient:
             aws_access_key_id=os.environ["ACCESS_KEY_ID"],
             aws_secret_access_key=os.environ["ACCESS_KEY_SECRET"],
         )
-        self.kinesis_client = self.get_auth_client("kinesis")
+        self.kinesis_client = self.get_auth_client("aws")
         self.cloudwatchlogs_client = self.get_auth_client("logs")
 
     def signed_request_v2(self, endpoint, dataObj, method='POST'):
@@ -104,14 +104,14 @@ class AwsClient:
 
     def put_records(self, records):
         logger.info("############# KINESIS #############")
-        logger.info("sending records to kinesis")
+        logger.info("sending records to aws")
         records_result = self.kinesis_client.put_records(
             Records=records,
             StreamName=os.environ["STREAM_NAME"],
             # StreamARN=os.environ["STREAM_ARN"]
         )
         self.write_cloudwatch_log(
-            f"Sensor {os.environ['SENSOR_SSID']}: Data successfully sent to kinesis")
+            f"Sensor {os.environ['SENSOR_SSID']}: Data successfully sent to aws")
         logger.info(f"Wrote all records successfully")
         logger.info("############ END KINESIS ###########")
 

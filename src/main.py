@@ -1,12 +1,11 @@
 import json
 import os
 import threading
-import logging
 import time
 from datetime import datetime, timedelta
-
+from logger import logger
 from bluetooth_package import BluetoothService
-from kinesis import AwsClient
+from aws import AwsClient
 from sensor import get_frames_within_window, format_sensor_data, delete_all_frames, reset_rotation_interval, \
     check_sensor_connection, initialize_default_sensor, get_monitor, set_default_filters
 from lcd_display import ScrollingText
@@ -14,15 +13,7 @@ from wifi import connect_to_wifi_network, check_internet_connection
 from gpio import turn_relay_off, turn_relay_on, cleanup
 from enum import Enum
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
+
 
 
 class ConnectionStatus(Enum):
@@ -42,7 +33,6 @@ class Events(Enum):
     BED_EXIT = "bedExit"
     BED_ENTRY = "bedEntry"
     TURN_TIMER = "turnTimerExpire"
-
 
 class BedExitMonitor:
     def __init__(self):
