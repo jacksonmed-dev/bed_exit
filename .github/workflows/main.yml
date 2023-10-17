@@ -26,12 +26,11 @@ jobs:
       - name: Configure AWS Access OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          region: ${{ vars.REGION }}
           github-role-arn: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
           commit-id: ${{ github.event.head_commit.id }}
           role-to-assume: ${{ inputs.github-role-arn }}
           role-session-name: github-deploy-${{ inputs.environment }}-${{ inputs.commit-id }}
-          aws-region: ${{ inputs.region }}
+          aws-region: ${{ vars.REGION }}
       - name: Upload to S3
         run: |
           aws s3 cp project.zip s3://iot-deployments-prod/
