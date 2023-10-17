@@ -1,10 +1,8 @@
-import logging
+from logger import logger
 import os
 import time
-
 import boto3
 import json
-
 import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -12,18 +10,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
 
-class KinesisClient:
-
+class AwsClient:
     def __init__(self):
         self.session = boto3.Session(
             aws_access_key_id=os.environ["ACCESS_KEY_ID"],
@@ -103,25 +91,24 @@ class KinesisClient:
 
     def put_records(self, records):
         logger.info("############# KINESIS #############")
-        logger.info("sending records to kinesis")
+        logger.info("sending records to aws_client")
         records_result = self.kinesis_client.put_records(
             Records=records,
             StreamName=os.environ["STREAM_NAME"],
             # StreamARN=os.environ["STREAM_ARN"]
         )
         self.write_cloudwatch_log(
-            f"Sensor {os.environ['SENSOR_SSID']}: Data successfully sent to kinesis")
+            f"Sensor {os.environ['SENSOR_SSID']}: Data successfully sent to aws_client")
         logger.info(f"Wrote all records successfully")
         logger.info("############ END KINESIS ###########")
-
 
     def write_cloudwatch_log(self, message):
         now_ns = time.time_ns()
         now_ms = int(now_ns / 1000000)
 
         self.cloudwatchlogs_client.put_log_events(
-            logGroupName="heritage-oaks-prod-sensor-log-group",
-            logStreamName="heritage-oaks-prod-sensor-log-stream",
+            logGroupName=os.environ["AWS_LOG_GROUP"],
+            logStreamName=os.environ["AWS_LOG_STREAM"],
             logEvents=[
                 {
                     "timestamp": now_ms,
@@ -129,4 +116,3 @@ class KinesisClient:
                 },
             ],
         )
-

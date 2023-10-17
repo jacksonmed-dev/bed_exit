@@ -1,22 +1,14 @@
 import json
-import logging
 import os
 import uuid
 from datetime import datetime
-
 import requests
+from logger import logger
 
+from dotenv import load_dotenv
+
+load_dotenv()
 sensor_url = os.environ["SENSOR_URL"]
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
 
 
 def initialize_default_sensor():
@@ -36,6 +28,23 @@ def set_frequency(new_frequency):
     response2 = requests.put(url2, headers=headers, json=payload)
 
     if response1.status_code == 204 and response2.status_code == 204:
+        return True
+    else:
+        return False  # or raise an exception, depending on your requirements
+
+
+def set_default_filters():
+    url = f"{sensor_url}/api/filters/spot"
+    url2 = f"{sensor_url}/api/filters/smooth"
+    url3 = f"{sensor_url}/api/filters/noise"
+
+    headers = {"Content-Type": "application/json"}
+    payload = False
+    response1 = requests.put(url, headers=headers, json=payload)
+    response2 = requests.put(url2, headers=headers, json=payload)
+    response3 = requests.put(url3, headers=headers, json=payload)
+
+    if response1.status_code == 204 and response2.status_code == 204 and response3.status_code == 204:
         return True
     else:
         return False  # or raise an exception, depending on your requirements
@@ -147,6 +156,61 @@ def check_sensor_connection():
         else:
             logger.info("Sensor Connection: Invalid")
             return False
+    except Exception as e:
+        logger.error("Error while checking sensor connection:", e)
+        return False
+
+
+def get_attended():
+    url = f"{sensor_url}/api/monitor/attended"
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
+        data = json.loads(response.text)
+        return data
+    except Exception as e:
+        logger.error("Error while checking sensor connection:", e)
+        return False
+
+
+def get_storage():
+    url = f"{sensor_url}/api/monitor/storage"
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
+        data = json.loads(response.text)
+        return data
+    except Exception as e:
+        logger.error("Error while checking sensor connection:", e)
+        return False
+
+
+def get_body():
+    url = f"{sensor_url}/api/monitor/body"
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
+        data = json.loads(response.text)
+        return data
+    except Exception as e:
+        logger.error("Error while checking sensor connection:", e)
+        return False
+
+
+def get_current_frame():
+    url = f"{sensor_url}/api/frames"
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
+        data = json.loads(response.text)
+        return data
+    except Exception as e:
+        logger.error("Error while checking sensor connection:", e)
+        return False
+
+
+def get_monitor():
+    url = f"{sensor_url}/api/monitor"
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout value (e.g., 5 seconds)
+        data = json.loads(response.text)
+        return data
     except Exception as e:
         logger.error("Error while checking sensor connection:", e)
         return False

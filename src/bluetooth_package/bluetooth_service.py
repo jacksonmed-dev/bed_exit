@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import logging
+from logger import logger
 
 import dbus
 import dbus.exceptions
@@ -24,21 +24,12 @@ from .ble import find_adapter, Advertisement, Descriptor, Characteristic, Servic
 MainLoop = None
 try:
     from gi.repository import GLib
+
     MainLoop = GLib.MainLoop
 except ImportError:
     import gobject as GObject
 
     MainLoop = GObject.MainLoop
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logHandler = logging.StreamHandler()
-filelogHandler = logging.FileHandler("logs.log")
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logHandler.setFormatter(formatter)
-filelogHandler.setFormatter(formatter)
-logger.addHandler(filelogHandler)
-logger.addHandler(logHandler)
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
