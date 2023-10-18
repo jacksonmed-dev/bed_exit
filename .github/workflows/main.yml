@@ -29,8 +29,8 @@ jobs:
           github-role-arn: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
           commit-id: ${{ github.event.head_commit.id }}
           role-to-assume: ${{ inputs.github-role-arn }}
-          role-session-name: github-deploy-${{ inputs.environment }}-${{ github.event.head_commit.id }}
+          role-session-name: github-deploy-staging-${{ github.event.head_commit.id }}
           aws-region: ${{ vars.REGION }}
       - name: Upload to S3
         run: |
-          aws s3 cp project.zip s3://iot-deployments-prod/
+          aws s3 cp project.zip s3://iot-deployments-us-west-2-staging/
