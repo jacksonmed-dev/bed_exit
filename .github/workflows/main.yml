@@ -4,6 +4,10 @@ on:
   push:
     branches: ["staging"]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     environment: staging
