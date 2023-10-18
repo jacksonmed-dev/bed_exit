@@ -26,9 +26,8 @@ jobs:
       - name: Configure AWS Access OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          github-role-arn: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
           commit-id: ${{ github.event.head_commit.id }}
-          role-to-assume: ${{ inputs.github-role-arn }}
+          role-to-assume:  ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
           role-session-name: github-deploy-staging-${{ github.event.head_commit.id }}
           aws-region: ${{ vars.REGION }}
       - name: Upload to S3
